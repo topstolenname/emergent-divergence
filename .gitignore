@@ -5,7 +5,6 @@ dist/
 build/
 .eggs/
 *.egg
-data/raw_logs/run_*
 data/processed/*
 data/reports/*
 !data/**/.gitkeep

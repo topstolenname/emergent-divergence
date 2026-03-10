@@ -1,0 +1,479 @@
+{
+  "linguistic_divergence": {
+    "pairwise_jsd": {
+      "agent_0_vs_agent_1": 0.298641,
+      "agent_0_vs_agent_2": 0.286987,
+      "agent_1_vs_agent_2": 0.294731
+    },
+    "mean_jsd": 0.293453,
+    "jsd_over_time": [
+      {
+        "window_start": 1,
+        "window_end": 10,
+        "mean_jsd": 0.382028,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.38898,
+          "agent_0_vs_agent_2": 0.383754,
+          "agent_1_vs_agent_2": 0.373349
+        }
+      },
+      {
+        "window_start": 2,
+        "window_end": 11,
+        "mean_jsd": 0.378611,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.381564,
+          "agent_0_vs_agent_2": 0.382798,
+          "agent_1_vs_agent_2": 0.37147
+        }
+      },
+      {
+        "window_start": 3,
+        "window_end": 12,
+        "mean_jsd": 0.379877,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.383905,
+          "agent_0_vs_agent_2": 0.382237,
+          "agent_1_vs_agent_2": 0.373489
+        }
+      },
+      {
+        "window_start": 4,
+        "window_end": 13,
+        "mean_jsd": 0.381736,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.382873,
+          "agent_0_vs_agent_2": 0.385241,
+          "agent_1_vs_agent_2": 0.377093
+        }
+      },
+      {
+        "window_start": 5,
+        "window_end": 14,
+        "mean_jsd": 0.380612,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.379879,
+          "agent_0_vs_agent_2": 0.382183,
+          "agent_1_vs_agent_2": 0.379773
+        }
+      },
+      {
+        "window_start": 6,
+        "window_end": 15,
+        "mean_jsd": 0.383301,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.38149,
+          "agent_0_vs_agent_2": 0.386279,
+          "agent_1_vs_agent_2": 0.382134
+        }
+      },
+      {
+        "window_start": 7,
+        "window_end": 16,
+        "mean_jsd": 0.384306,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.381672,
+          "agent_0_vs_agent_2": 0.387205,
+          "agent_1_vs_agent_2": 0.384041
+        }
+      },
+      {
+        "window_start": 8,
+        "window_end": 17,
+        "mean_jsd": 0.381677,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.378266,
+          "agent_0_vs_agent_2": 0.384424,
+          "agent_1_vs_agent_2": 0.382342
+        }
+      },
+      {
+        "window_start": 9,
+        "window_end": 18,
+        "mean_jsd": 0.381579,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.379276,
+          "agent_0_vs_agent_2": 0.382963,
+          "agent_1_vs_agent_2": 0.382499
+        }
+      },
+      {
+        "window_start": 10,
+        "window_end": 19,
+        "mean_jsd": 0.383109,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.380089,
+          "agent_0_vs_agent_2": 0.383911,
+          "agent_1_vs_agent_2": 0.385328
+        }
+      },
+      {
+        "window_start": 11,
+        "window_end": 20,
+        "mean_jsd": 0.387792,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.385192,
+          "agent_0_vs_agent_2": 0.388552,
+          "agent_1_vs_agent_2": 0.389632
+        }
+      },
+      {
+        "window_start": 12,
+        "window_end": 21,
+        "mean_jsd": 0.389437,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.39257,
+          "agent_0_vs_agent_2": 0.386134,
+          "agent_1_vs_agent_2": 0.389608
+        }
+      },
+      {
+        "window_start": 13,
+        "window_end": 22,
+        "mean_jsd": 0.387865,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.394374,
+          "agent_0_vs_agent_2": 0.384197,
+          "agent_1_vs_agent_2": 0.385025
+        }
+      },
+      {
+        "window_start": 14,
+        "window_end": 23,
+        "mean_jsd": 0.386859,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.393937,
+          "agent_0_vs_agent_2": 0.383271,
+          "agent_1_vs_agent_2": 0.383369
+        }
+      },
+      {
+        "window_start": 15,
+        "window_end": 24,
+        "mean_jsd": 0.389044,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.39924,
+          "agent_0_vs_agent_2": 0.385044,
+          "agent_1_vs_agent_2": 0.382847
+        }
+      },
+      {
+        "window_start": 16,
+        "window_end": 25,
+        "mean_jsd": 0.391664,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.402861,
+          "agent_0_vs_agent_2": 0.384958,
+          "agent_1_vs_agent_2": 0.387173
+        }
+      },
+      {
+        "window_start": 17,
+        "window_end": 26,
+        "mean_jsd": 0.396013,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.410091,
+          "agent_0_vs_agent_2": 0.38734,
+          "agent_1_vs_agent_2": 0.390608
+        }
+      },
+      {
+        "window_start": 18,
+        "window_end": 27,
+        "mean_jsd": 0.398115,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.410877,
+          "agent_0_vs_agent_2": 0.389402,
+          "agent_1_vs_agent_2": 0.394065
+        }
+      },
+      {
+        "window_start": 19,
+        "window_end": 28,
+        "mean_jsd": 0.399216,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.412011,
+          "agent_0_vs_agent_2": 0.387865,
+          "agent_1_vs_agent_2": 0.397773
+        }
+      },
+      {
+        "window_start": 20,
+        "window_end": 29,
+        "mean_jsd": 0.40064,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.410853,
+          "agent_0_vs_agent_2": 0.390268,
+          "agent_1_vs_agent_2": 0.4008
+        }
+      },
+      {
+        "window_start": 21,
+        "window_end": 30,
+        "mean_jsd": 0.401427,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.412403,
+          "agent_0_vs_agent_2": 0.390172,
+          "agent_1_vs_agent_2": 0.401707
+        }
+      },
+      {
+        "window_start": 22,
+        "window_end": 31,
+        "mean_jsd": 0.403127,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.410568,
+          "agent_0_vs_agent_2": 0.39256,
+          "agent_1_vs_agent_2": 0.406253
+        }
+      },
+      {
+        "window_start": 23,
+        "window_end": 32,
+        "mean_jsd": 0.398573,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.402,
+          "agent_0_vs_agent_2": 0.389332,
+          "agent_1_vs_agent_2": 0.404386
+        }
+      },
+      {
+        "window_start": 24,
+        "window_end": 33,
+        "mean_jsd": 0.397307,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.400572,
+          "agent_0_vs_agent_2": 0.386245,
+          "agent_1_vs_agent_2": 0.405104
+        }
+      },
+      {
+        "window_start": 25,
+        "window_end": 34,
+        "mean_jsd": 0.39535,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.398457,
+          "agent_0_vs_agent_2": 0.387783,
+          "agent_1_vs_agent_2": 0.399811
+        }
+      },
+      {
+        "window_start": 26,
+        "window_end": 35,
+        "mean_jsd": 0.395158,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.392758,
+          "agent_0_vs_agent_2": 0.390327,
+          "agent_1_vs_agent_2": 0.402389
+        }
+      },
+      {
+        "window_start": 27,
+        "window_end": 36,
+        "mean_jsd": 0.393222,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.391311,
+          "agent_0_vs_agent_2": 0.389045,
+          "agent_1_vs_agent_2": 0.399309
+        }
+      },
+      {
+        "window_start": 28,
+        "window_end": 37,
+        "mean_jsd": 0.391433,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.387239,
+          "agent_0_vs_agent_2": 0.38946,
+          "agent_1_vs_agent_2": 0.3976
+        }
+      },
+      {
+        "window_start": 29,
+        "window_end": 38,
+        "mean_jsd": 0.391848,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.386844,
+          "agent_0_vs_agent_2": 0.390574,
+          "agent_1_vs_agent_2": 0.398125
+        }
+      },
+      {
+        "window_start": 30,
+        "window_end": 39,
+        "mean_jsd": 0.390526,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.383683,
+          "agent_0_vs_agent_2": 0.392955,
+          "agent_1_vs_agent_2": 0.394941
+        }
+      },
+      {
+        "window_start": 31,
+        "window_end": 40,
+        "mean_jsd": 0.390398,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.38656,
+          "agent_0_vs_agent_2": 0.389529,
+          "agent_1_vs_agent_2": 0.395105
+        }
+      },
+      {
+        "window_start": 32,
+        "window_end": 41,
+        "mean_jsd": 0.38928,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.384201,
+          "agent_0_vs_agent_2": 0.388102,
+          "agent_1_vs_agent_2": 0.395537
+        }
+      },
+      {
+        "window_start": 33,
+        "window_end": 42,
+        "mean_jsd": 0.394022,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.39192,
+          "agent_0_vs_agent_2": 0.391904,
+          "agent_1_vs_agent_2": 0.398242
+        }
+      },
+      {
+        "window_start": 34,
+        "window_end": 43,
+        "mean_jsd": 0.393623,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.395371,
+          "agent_0_vs_agent_2": 0.385915,
+          "agent_1_vs_agent_2": 0.399582
+        }
+      },
+      {
+        "window_start": 35,
+        "window_end": 44,
+        "mean_jsd": 0.391024,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.394604,
+          "agent_0_vs_agent_2": 0.380089,
+          "agent_1_vs_agent_2": 0.39838
+        }
+      },
+      {
+        "window_start": 36,
+        "window_end": 45,
+        "mean_jsd": 0.383972,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.387413,
+          "agent_0_vs_agent_2": 0.372641,
+          "agent_1_vs_agent_2": 0.391861
+        }
+      },
+      {
+        "window_start": 37,
+        "window_end": 46,
+        "mean_jsd": 0.384735,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.387381,
+          "agent_0_vs_agent_2": 0.372916,
+          "agent_1_vs_agent_2": 0.393908
+        }
+      },
+      {
+        "window_start": 38,
+        "window_end": 47,
+        "mean_jsd": 0.390072,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.392955,
+          "agent_0_vs_agent_2": 0.37988,
+          "agent_1_vs_agent_2": 0.39738
+        }
+      },
+      {
+        "window_start": 39,
+        "window_end": 48,
+        "mean_jsd": 0.390099,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.39608,
+          "agent_0_vs_agent_2": 0.376475,
+          "agent_1_vs_agent_2": 0.397742
+        }
+      },
+      {
+        "window_start": 40,
+        "window_end": 49,
+        "mean_jsd": 0.39192,
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.397972,
+          "agent_0_vs_agent_2": 0.378974,
+          "agent_1_vs_agent_2": 0.398815
+        }
+      }
+    ],
+    "lexical_uniqueness": {
+      "agent_0": 0.2016,
+      "agent_1": 0.2199,
+      "agent_2": 0.1959
+    }
+  },
+  "behavioral_specialization": {
+    "profiles": {
+      "agent_0": {
+        "proposal": 0.302,
+        "critique": 0.2173,
+        "synthesis": 0.039,
+        "verification": 0.153,
+        "recall": 0.025,
+        "clarification": 0.0329
+      },
+      "agent_1": {
+        "proposal": 0.095,
+        "critique": 0.2727,
+        "synthesis": 0.02,
+        "verification": 0.217,
+        "recall": 0.025,
+        "clarification": 0.0472
+      },
+      "agent_2": {
+        "proposal": 0.149,
+        "critique": 0.2618,
+        "synthesis": 0.055,
+        "verification": 0.212,
+        "recall": 0.0125,
+        "clarification": 0.0414
+      }
+    },
+    "divergence_score": 0.154375
+  },
+  "memory_usage": {
+    "agent_0": {
+      "total_writes": 100,
+      "total_reads": 945,
+      "mean_reads_per_msg": 9.45,
+      "max_reads": 10
+    },
+    "agent_1": {
+      "total_writes": 100,
+      "total_reads": 945,
+      "mean_reads_per_msg": 9.45,
+      "max_reads": 10
+    },
+    "agent_2": {
+      "total_writes": 100,
+      "total_reads": 945,
+      "mean_reads_per_msg": 9.45,
+      "max_reads": 10
+    }
+  },
+  "coordination_structure": {
+    "message_counts": {
+      "agent_0": 100,
+      "agent_1": 100,
+      "agent_2": 100
+    },
+    "first_speaker_counts": {
+      "agent_0": 49
+    },
+    "total_rounds": 49
+  },
+  "agent_count": 3,
+  "total_messages": 300
+}
