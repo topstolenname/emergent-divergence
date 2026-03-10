@@ -1,0 +1,17 @@
+# Condition A: Memory-enabled coordination
+# Agents retain and use memory across rounds
+num_agents: 3
+role_biases:
+  - proposer
+  - critic
+  - synthesizer
+memory_enabled: true
+memory_max_entries: 200
+model: "claude-sonnet-4-20250514"
+max_tokens: 1024
+temperature: 1.0
+num_rounds: 100
+turns_per_round: 2
+condition: "memory_enabled"
+seed: 42
+output_dir: "data/raw_logs"

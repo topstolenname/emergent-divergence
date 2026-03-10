@@ -1,0 +1,17 @@
+# Condition B: No-memory control
+# Agents do not accumulate persistent memory between rounds
+num_agents: 3
+role_biases:
+  - proposer
+  - critic
+  - synthesizer
+memory_enabled: false
+memory_max_entries: 0
+model: "claude-sonnet-4-20250514"
+max_tokens: 1024
+temperature: 1.0
+num_rounds: 100
+turns_per_round: 2
+condition: "no_memory"
+seed: 42
+output_dir: "data/raw_logs"
