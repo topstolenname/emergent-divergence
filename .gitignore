@@ -5,8 +5,12 @@ dist/
 build/
 .eggs/
 *.egg
+data/raw_logs/run_*
 data/processed/*
 data/reports/*
+!data/reports/*.md
+!data/reports/figures/
+!data/reports/figures/*.png
 !data/**/.gitkeep
 .env
 .venv/

@@ -357,12 +357,16 @@ def generate_analysis_report(log_path: Path) -> dict[str, Any]:
     # D. Coordination
     coord_stats = compute_turn_order_stats(agent_messages)
 
+    # E. Temporal correlation
+    temporal_correlation = compute_temporal_correlation(jsd_over_time)
+
     return {
         "linguistic_divergence": {
             "pairwise_jsd": jsd,
             "mean_jsd": round(float(np.mean(list(jsd.values()))), 6) if jsd else 0.0,
             "jsd_over_time": jsd_over_time,
             "lexical_uniqueness": lexical_uniq,
+            "temporal_correlation": temporal_correlation,
         },
         "behavioral_specialization": {
             "profiles": profiles,
@@ -372,6 +376,48 @@ def generate_analysis_report(log_path: Path) -> dict[str, Any]:
         "coordination_structure": coord_stats,
         "agent_count": len(agent_messages),
         "total_messages": sum(len(msgs) for msgs in agent_messages.values()),
+    }
+
+
+# ── E. Temporal Correlation (Spearman) ───────────────────────────────────────
+
+def compute_temporal_correlation(jsd_over_time: list[dict]) -> dict[str, Any]:
+    """Compute Spearman rank correlation between window index and mean JSD.
+
+    Tests H1: whether linguistic divergence increases over time.
+
+    Args:
+        jsd_over_time: Output of compute_jsd_over_time()
+
+    Returns:
+        Dict with rho, p_value, significance, direction, and interpretation
+    """
+    from scipy.stats import spearmanr
+
+    if len(jsd_over_time) < 5:
+        return {"error": "Insufficient data points for correlation (need >= 5 windows)"}
+
+    indices = list(range(len(jsd_over_time)))
+    jsd_values = [w["mean_jsd"] for w in jsd_over_time]
+
+    rho, p_value = spearmanr(indices, jsd_values)
+
+    significant = bool(p_value < 0.05)
+    direction = "increasing" if rho > 0 else "decreasing"
+
+    return {
+        "test": "Spearman rank correlation",
+        "rho": round(float(rho), 4),
+        "p_value": float(p_value),
+        "significant_at_05": significant,
+        "direction": direction if significant else "no significant trend",
+        "n_data_points": len(jsd_over_time),
+        "interpretation": (
+            f"Significant {'positive' if rho > 0 else 'negative'} trend "
+            f"(\u03c1={rho:.3f}, p={p_value:.4f})"
+            if significant
+            else f"No significant temporal trend (\u03c1={rho:.3f}, p={p_value:.4f})"
+        ),
     }
 
 
