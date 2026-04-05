@@ -128,14 +128,22 @@ class ClaudeCodeBackend:
             "--print",
             "--output-format", "text",
             "--model", self._model,
-            "--max-turns", "1",
         ]
+
+        import os
+        env = os.environ.copy()
+        # Ensure node is findable (needed by claude CLI)
+        for p in ["/usr/local/bin", "/opt/homebrew/bin",
+                  str(Path.home() / ".npm-global/bin")]:
+            if p not in env.get("PATH", ""):
+                env["PATH"] = p + ":" + env.get("PATH", "")
 
         proc = await asyncio.create_subprocess_exec(
             *cmd,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             stdin=asyncio.subprocess.PIPE,
+            env=env,
         )
         stdout, stderr = await proc.communicate(input=prompt.encode())
 
@@ -262,6 +270,7 @@ ROLE_BIASES: dict[str, str] = {
         "You tend to integrate perspectives, find common ground, and build "
         "composite solutions. You value coherence and completeness."
     ),
+    "generic": "",  # No role bias — used by Condition C (zero_role_bias)
 }
 
 

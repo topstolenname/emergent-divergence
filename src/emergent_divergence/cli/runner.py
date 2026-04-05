@@ -55,6 +55,13 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     print(f"Analyzing: {log_path}")
     report = generate_analysis_report(log_path)
 
+    # Semantic analysis (opt-in)
+    if args.semantic:
+        from emergent_divergence.metrics.semantic_divergence import run_semantic_analysis
+        print("\nRunning semantic analysis...")
+        semantic_report = run_semantic_analysis(run_dir)
+        report["semantic_divergence"] = semantic_report
+
     # Save report
     report_path = run_dir / "analysis_report.json"
     with open(report_path, "w") as f:
@@ -79,6 +86,12 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         top = sorted(prof.items(), key=lambda x: x[1], reverse=True)[:3]
         top_str = ", ".join(f"{k}={v}" for k, v in top)
         print(f"    {aid}: {top_str}")
+    sd = report.get("semantic_divergence", {})
+    if sd and "error" not in sd:
+        print(f"\n  Semantic Divergence:")
+        print(f"    Mean cosine distance: {sd.get('mean_cosine_distance', 'N/A')}")
+        for pair, ps in sd.get("pairwise_summaries", {}).items():
+            print(f"    {pair}: mean={ps['mean']}, trend={ps['trend']:+.6f}")
     print(f"{'=' * 60}")
 
 
@@ -125,13 +138,15 @@ def main() -> None:
     p_run = subparsers.add_parser("run", help="Execute an experiment")
     p_run.add_argument("--config", required=True, help="Path to YAML config")
     p_run.add_argument("--rounds", type=int, help="Override number of rounds")
-    p_run.add_argument("--backend", choices=["anthropic", "mock"],
+    p_run.add_argument("--backend", choices=["anthropic", "claude-code", "mock"],
                        help="Override LLM backend (default: from config)")
     p_run.set_defaults(func=cmd_run)
 
     # analyze
     p_analyze = subparsers.add_parser("analyze", help="Analyze a completed run")
     p_analyze.add_argument("--run-dir", required=True, help="Path to run directory")
+    p_analyze.add_argument("--semantic", action="store_true",
+                           help="Include embedding-based semantic divergence analysis")
     p_analyze.set_defaults(func=cmd_analyze)
 
     # compare
