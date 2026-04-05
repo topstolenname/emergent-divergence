@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
 from emergent_divergence.memory.store import MemoryStore
@@ -70,6 +71,83 @@ class AnthropicBackend:
             return len(enc.encode(text))
         except Exception:
             return None
+
+
+# ── Claude Code Backend ──────────────────────────────────────────────────────
+
+class ClaudeCodeBackend:
+    """Backend that routes through Claude Code CLI, billed to a Max/Pro subscription.
+
+    This avoids requiring separate API credits by using the `claude` CLI's
+    `--print` mode, which authenticates via the user's claude.ai login.
+    """
+
+    def __init__(self, model: str = "claude-sonnet-4-20250514",
+                 max_tokens: int = 1024, temperature: float = 1.0):
+        import shutil
+        # Find claude in common locations
+        self._claude_path = (
+            shutil.which("claude")
+            or shutil.which("claude", path=f"{Path.home()}/.npm-global/bin")
+        )
+        if not self._claude_path:
+            raise RuntimeError(
+                "Claude Code CLI not found. Install with: "
+                "npm install -g @anthropic-ai/claude-code"
+            )
+        self._model = model
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+
+    @property
+    def model_name(self) -> str:
+        return self._model
+
+    async def complete(self, messages: list[dict[str, str]], **kwargs) -> str:
+        import asyncio
+
+        system = kwargs.get("system", "")
+
+        # Build a single prompt from the conversation history
+        prompt_parts = []
+        if system:
+            prompt_parts.append(f"[System instructions]\n{system}\n")
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            if role == "user":
+                prompt_parts.append(f"[User]: {content}")
+            elif role == "assistant":
+                prompt_parts.append(f"[Assistant]: {content}")
+        prompt = "\n\n".join(prompt_parts)
+
+        # Call claude CLI with --print for non-interactive single-shot mode
+        # Use stdin piping to avoid arg length limits with long prompts
+        cmd = [
+            self._claude_path,
+            "--print",
+            "--output-format", "text",
+            "--model", self._model,
+            "--max-turns", "1",
+        ]
+
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            stdin=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await proc.communicate(input=prompt.encode())
+
+        if proc.returncode != 0:
+            err = stderr.decode().strip() or stdout.decode().strip()
+            raise RuntimeError(f"Claude Code CLI error (exit {proc.returncode}): {err[:500]}")
+
+        return stdout.decode().strip()
+
+    def token_count(self, text: str) -> int | None:
+        # Rough approximation
+        return max(1, len(text) // 4)
 
 
 # ── Mock Backend ──────────────────────────────────────────────────────────────

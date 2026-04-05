@@ -1,5 +1,7 @@
 # Condition A: Memory-enabled coordination
 # Agents retain and use memory across rounds
+# backend: "claude-code" uses Max/Pro subscription (no API credits needed)
+#          "anthropic" uses API credits from console.anthropic.com
 num_agents: 3
 role_biases:
   - proposer

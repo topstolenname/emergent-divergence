@@ -20,6 +20,7 @@ from emergent_divergence.agents.agent import (
     Agent,
     AgentConfig,
     AnthropicBackend,
+    ClaudeCodeBackend,
     LLMBackend,
     MockLLMBackend,
 )
@@ -58,8 +59,8 @@ class ExperimentConfig:
             raise ValueError("Need at least 2 agents")
         if self.role_biases and len(self.role_biases) != self.num_agents:
             raise ValueError("role_biases length must match num_agents")
-        if self.backend not in ("anthropic", "mock"):
-            raise ValueError(f"Unknown backend: {self.backend!r}. Use 'anthropic' or 'mock'.")
+        if self.backend not in ("anthropic", "claude-code", "mock"):
+            raise ValueError(f"Unknown backend: {self.backend!r}. Use 'anthropic', 'claude-code', or 'mock'.")
 
 
 DEFAULT_ROLES = ["proposer", "critic", "synthesizer"]
@@ -69,6 +70,12 @@ def _create_backend(config: ExperimentConfig) -> LLMBackend:
     """Factory: build the right LLM backend from config."""
     if config.backend == "mock":
         return MockLLMBackend(model="mock-v1")
+    if config.backend == "claude-code":
+        return ClaudeCodeBackend(
+            model=config.model,
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
+        )
     return AnthropicBackend(
         model=config.model,
         max_tokens=config.max_tokens,
