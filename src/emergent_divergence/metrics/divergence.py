@@ -329,8 +329,28 @@ def compute_turn_order_stats(agent_messages: dict[str, list[dict]]) -> dict[str,
 
 # ── Summary Report ────────────────────────────────────────────────────────────
 
-def generate_analysis_report(log_path: Path) -> dict[str, Any]:
-    """Generate a complete analysis report from a single run's log file."""
+def generate_analysis_report(
+    log_path: Path,
+    *,
+    classifier: str = "keyword",
+    judge_provider: Any | None = None,
+    judge_model: str | None = None,
+) -> dict[str, Any]:
+    """Generate a complete analysis report from a single run's log file.
+
+    Args:
+        log_path: Path to the run's ``events.jsonl``.
+        classifier: Behavioral classifier(s) to run — ``"keyword"`` (default,
+            backward-compatible), ``"llm_judge"``, or ``"both"``. The keyword
+            ``behavioral_specialization`` section is always produced; the judge
+            adds ``behavioral_specialization_llm_judge`` and, under ``"both"``,
+            a ``classifier_agreement`` section.
+        judge_provider: Optional ``ModelProvider`` for the LLM judge. When the
+            judge is requested and this is ``None``, a Claude provider is built
+            from ``judge_model``. Injectable so analysis can run offline in tests.
+        judge_model: Judge model id. Defaults to the LLM-judge module default
+            (Haiku) when not supplied.
+    """
     agent_messages = load_agent_messages(log_path)
 
     if not agent_messages:
@@ -341,7 +361,7 @@ def generate_analysis_report(log_path: Path) -> dict[str, Any]:
     jsd_over_time = compute_jsd_over_time(agent_messages, window_size=10)
     lexical_uniq = compute_lexical_uniqueness(agent_messages)
 
-    # B. Behavioral specialization
+    # B. Behavioral specialization (keyword classifier — always computed)
     profiles = compute_behavioral_profiles(agent_messages)
     behav_div = compute_behavioral_divergence(profiles)
 
@@ -354,7 +374,7 @@ def generate_analysis_report(log_path: Path) -> dict[str, Any]:
     # E. Temporal correlation
     temporal_correlation = compute_temporal_correlation(jsd_over_time)
 
-    return {
+    report: dict[str, Any] = {
         "linguistic_divergence": {
             "pairwise_jsd": jsd,
             "mean_jsd": round(float(np.mean(list(jsd.values()))), 6) if jsd else 0.0,
@@ -371,6 +391,43 @@ def generate_analysis_report(log_path: Path) -> dict[str, Any]:
         "agent_count": len(agent_messages),
         "total_messages": sum(len(msgs) for msgs in agent_messages.values()),
     }
+
+    # B'. LLM-judge classifier (analysis-side, opt-in)
+    if classifier in ("llm_judge", "both"):
+        _attach_llm_judge(
+            report, log_path,
+            classifier=classifier,
+            judge_provider=judge_provider,
+            judge_model=judge_model,
+        )
+
+    return report
+
+
+def _attach_llm_judge(
+    report: dict[str, Any],
+    log_path: Path,
+    *,
+    classifier: str,
+    judge_provider: Any | None,
+    judge_model: str | None,
+) -> None:
+    """Run the LLM judge and attach its section(s) to ``report`` in place."""
+    from emergent_divergence.metrics import llm_judge
+
+    if judge_provider is None:
+        from emergent_divergence.providers import build_provider
+        model = judge_model or llm_judge.DEFAULT_JUDGE_MODEL
+        judge_provider = build_provider("claude", {"model": model})
+
+    judge_section = llm_judge.classify_run(
+        log_path, judge_provider, judge_model=judge_model,
+    )
+    per_message = judge_section.pop("_per_message", [])
+    report["behavioral_specialization_llm_judge"] = judge_section
+
+    if classifier == "both" and per_message and "error" not in judge_section:
+        report["classifier_agreement"] = llm_judge.compute_classifier_agreement(per_message)
 
 
 # ── E. Temporal Correlation (Spearman) ───────────────────────────────────────

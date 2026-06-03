@@ -54,7 +54,15 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         sys.exit(1)
 
     print(f"Analyzing: {log_path}")
-    report = generate_analysis_report(log_path)
+    classifier = getattr(args, "classifier", "keyword")
+    judge_model = getattr(args, "judge_model", "claude-haiku-4-5-20251001")
+    if classifier != "keyword":
+        print(f"  Behavioral classifier: {classifier} (judge model: {judge_model})")
+    report = generate_analysis_report(
+        log_path,
+        classifier=classifier,
+        judge_model=judge_model,
+    )
 
     # Semantic analysis (opt-in)
     if args.semantic:
@@ -87,6 +95,26 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         top = sorted(prof.items(), key=lambda x: x[1], reverse=True)[:3]
         top_str = ", ".join(f"{k}={v}" for k, v in top)
         print(f"    {aid}: {top_str}")
+    bj = report.get("behavioral_specialization_llm_judge")
+    if bj:
+        print("\n  Behavioral Specialization (LLM judge):")
+        if "error" in bj:
+            print(f"    Error: {bj['error']}")
+        else:
+            print(f"    Judge model:        {bj.get('judge_model', 'N/A')}")
+            print(f"    Divergence score:   {bj.get('divergence_score', 'N/A')}")
+            print(f"    Classifications:    {bj.get('total_classifications', 0)} "
+                  f"({bj.get('classification_failures', 0)} failed)")
+            for aid, prof in bj.get("profiles", {}).items():
+                top = sorted(prof.items(), key=lambda x: x[1], reverse=True)[:3]
+                top_str = ", ".join(f"{k}={v}" for k, v in top)
+                print(f"    {aid}: {top_str}")
+        ca = report.get("classifier_agreement")
+        if ca and "error" not in ca:
+            print("\n  Classifier Agreement (keyword vs judge):")
+            print(f"    Top-1 match rate:   {ca.get('top_1_match_rate', 'N/A')}")
+            print(f"    Mean Spearman:      {ca.get('mean_spearman_rank_correlation', 'N/A')}")
+
     sd = report.get("semantic_divergence", {})
     if sd and "error" not in sd:
         print("\n  Semantic Divergence:")
@@ -195,6 +223,13 @@ def main() -> None:
     p_analyze.add_argument("--run-dir", required=True, help="Path to run directory")
     p_analyze.add_argument("--semantic", action="store_true",
                            help="Include embedding-based semantic divergence analysis")
+    p_analyze.add_argument("--classifier", choices=["keyword", "llm_judge", "both"],
+                           default="keyword",
+                           help="Behavioral classifier (default: keyword). 'llm_judge' and "
+                                "'both' call the Anthropic judge and incur API cost.")
+    p_analyze.add_argument("--judge-model", dest="judge_model",
+                           default="claude-haiku-4-5-20251001",
+                           help="Judge model id (default: claude-haiku-4-5-20251001)")
     p_analyze.set_defaults(func=cmd_analyze)
 
     # compare
