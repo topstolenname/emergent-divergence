@@ -53,9 +53,11 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         print(f"Log file not found: {log_path}")
         sys.exit(1)
 
+    from emergent_divergence.metrics.llm_judge import DEFAULT_JUDGE_MODEL
+
     print(f"Analyzing: {log_path}")
     classifier = getattr(args, "classifier", "keyword")
-    judge_model = getattr(args, "judge_model", "claude-haiku-4-5-20251001")
+    judge_model = getattr(args, "judge_model", DEFAULT_JUDGE_MODEL)
     if classifier != "keyword":
         print(f"  Behavioral classifier: {classifier} (judge model: {judge_model})")
     report = generate_analysis_report(
@@ -227,9 +229,10 @@ def main() -> None:
                            default="keyword",
                            help="Behavioral classifier (default: keyword). 'llm_judge' and "
                                 "'both' call the Anthropic judge and incur API cost.")
+    from emergent_divergence.metrics.llm_judge import DEFAULT_JUDGE_MODEL
     p_analyze.add_argument("--judge-model", dest="judge_model",
-                           default="claude-haiku-4-5-20251001",
-                           help="Judge model id (default: claude-haiku-4-5-20251001)")
+                           default=DEFAULT_JUDGE_MODEL,
+                           help=f"Judge model id (default: {DEFAULT_JUDGE_MODEL})")
     p_analyze.set_defaults(func=cmd_analyze)
 
     # compare

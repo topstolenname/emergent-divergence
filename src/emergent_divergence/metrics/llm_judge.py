@@ -30,7 +30,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from collections import defaultdict
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -105,7 +104,25 @@ def build_judge_prompt(message_text: str) -> str:
 
 # ── Response parsing ──────────────────────────────────────────────────────────
 
-_JSON_OBJ_RE = re.compile(r"\{.*\}", re.S)
+def _extract_json_object(text: str) -> dict | None:
+    """Recover the first valid top-level JSON object embedded in ``text``.
+
+    Scans from each ``{`` and uses ``raw_decode`` so trailing prose, markdown
+    fences, or extra brace blocks after the object don't defeat parsing (a
+    greedy ``{.*}`` match would over-capture to the last ``}`` and fail).
+    """
+    decoder = json.JSONDecoder()
+    start = text.find("{")
+    while start != -1:
+        try:
+            obj, _ = decoder.raw_decode(text, start)
+        except (json.JSONDecodeError, ValueError):
+            start = text.find("{", start + 1)
+            continue
+        if isinstance(obj, dict):
+            return obj
+        start = text.find("{", start + 1)
+    return None
 
 
 def parse_judge_response(text: str) -> dict[str, float] | None:
@@ -116,14 +133,8 @@ def parse_judge_response(text: str) -> dict[str, float] | None:
     """
     if not text:
         return None
-    match = _JSON_OBJ_RE.search(text)
-    if not match:
-        return None
-    try:
-        raw = json.loads(match.group(0))
-    except (json.JSONDecodeError, ValueError):
-        return None
-    if not isinstance(raw, dict):
+    raw = _extract_json_object(text)
+    if raw is None:
         return None
 
     scores: dict[str, float] = {}
@@ -185,6 +196,19 @@ def _get_text(event: dict) -> str:
     return event.get("data", {}).get("response_text", "")
 
 
+def _event_field(event: dict, key: str) -> Any:
+    """Read ``key`` from the event top level or its ``data`` block.
+
+    Uses an explicit ``is not None`` check rather than ``or`` so falsy-but-valid
+    values (notably ``round_id``/``turn`` of ``0``) are preserved instead of
+    falling through to the other location.
+    """
+    top = event.get(key)
+    if top is not None:
+        return top
+    return event.get("data", {}).get(key)
+
+
 def classify_run(
     log_path: Path,
     provider: ModelProvider,
@@ -213,19 +237,26 @@ def classify_run(
 
     model_name = judge_model or getattr(provider, "model", None) or DEFAULT_JUDGE_MODEL
 
+    # Total message count is known upfront, so we can stop the moment the failure
+    # cap becomes unrecoverable instead of judging every message first — this
+    # avoids burning hundreds of provider calls on a misconfigured backend.
+    total_messages = sum(len(msgs) for msgs in agent_messages.values())
+    max_failures = max_failure_rate * total_messages
+
     classifications: dict[str, list[dict]] = defaultdict(list)
     per_message: list[dict] = []
     failures = 0
     total = 0
+    aborted = False
 
     # Deterministic, sequential pass over messages (spec §6: no parallelism).
     for aid in sorted(agent_messages.keys()):
         for event in agent_messages[aid]:
             total += 1
             text = _get_text(event)
-            round_id = event.get("round_id") or event.get("data", {}).get("round_id")
-            turn = event.get("data", {}).get("turn")
-            task_id = event.get("task_id") or event.get("data", {}).get("task_id")
+            round_id = _event_field(event, "round_id")
+            turn = _event_field(event, "turn")
+            task_id = _event_field(event, "task_id")
 
             scores = classify_message(provider, text)
             if scores is None:
@@ -236,6 +267,11 @@ def classify_run(
                     "task_id": task_id,
                     "scores": None,
                 })
+                # Once failures exceed the cap, later successes cannot bring the
+                # final rate back under it — bail out early.
+                if failures > max_failures:
+                    aborted = True
+                    break
                 continue
 
             classifications[aid].append({
@@ -251,12 +287,15 @@ def classify_run(
                 "text": text,
                 "scores": scores,
             })
+        if aborted:
+            break
 
-    if total and failures / total > max_failure_rate:
+    if aborted or (total and failures / total > max_failure_rate):
         return {
             "error": (
                 f"Judge failure rate {failures}/{total} "
                 f"({failures / total:.1%}) exceeds cap of {max_failure_rate:.0%}"
+                + (" — aborted early" if aborted else "")
             ),
             "judge_model": model_name,
             "total_classifications": total,

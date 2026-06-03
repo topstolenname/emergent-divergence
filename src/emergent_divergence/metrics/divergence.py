@@ -350,7 +350,16 @@ def generate_analysis_report(
             from ``judge_model``. Injectable so analysis can run offline in tests.
         judge_model: Judge model id. Defaults to the LLM-judge module default
             (Haiku) when not supplied.
+
+    Raises:
+        ValueError: if ``classifier`` is not one of ``keyword``/``llm_judge``/``both``.
     """
+    valid_classifiers = ("keyword", "llm_judge", "both")
+    if classifier not in valid_classifiers:
+        raise ValueError(
+            f"Unknown classifier {classifier!r}. Choose from {valid_classifiers}."
+        )
+
     agent_messages = load_agent_messages(log_path)
 
     if not agent_messages:
