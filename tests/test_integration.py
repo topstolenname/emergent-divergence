@@ -1,226 +1,154 @@
-"""Integration tests for the refactored experiment pipeline.
+"""End-to-end integration tests for the single-cell runner (brief §3, §4.3, §7).
 
-Tests the three new features working together:
-1. MockLLMBackend — deterministic responses without API calls
-2. Turn order rotation — starting agent rotates per round
-3. Async orchestration — full pipeline runs under asyncio
+These exercise the *real* synchronous coordination loop on the deterministic
+``StubProvider`` — no mocks, no network. They cover the deliberation loop, memory
+writes, the counterfactual influence probe, checkpoint/resume idempotency, and the
+bridge into per-cell metrics. The stub keeps them offline and fast while still
+driving every code path the paid backends use.
 """
 
 from __future__ import annotations
 
-import asyncio
-import json
-import tempfile
-from pathlib import Path
+from collections import Counter
 
-import pytest
-
-from emergent_divergence.agents.agent import Agent, AgentConfig, MockLLMBackend
 from emergent_divergence.logging_.events import load_events
-from emergent_divergence.orchestration.runner import ExperimentConfig, ExperimentRunner
+from emergent_divergence.metrics.cell import analyze_cell
+from emergent_divergence.orchestration.runner import CellConfig, CellRunner
+from emergent_divergence.providers.stub import StubProvider
 
 
-# ── MockLLMBackend unit tests ────────────────────────────────────────────────
-
-@pytest.mark.asyncio
-async def test_mock_backend_returns_string():
-    backend = MockLLMBackend()
-    result = await backend.complete(
-        [{"role": "user", "content": "Hello world"}],
-        system="You are a test agent.",
-    )
-    assert isinstance(result, str)
-    assert len(result) > 20
-
-
-@pytest.mark.asyncio
-async def test_mock_backend_deterministic():
-    """Same input → same output, always."""
-    backend = MockLLMBackend()
-    msgs = [{"role": "user", "content": "Analyze this claim."}]
-    kwargs = {"system": "You are Agent agent_0."}
-
-    r1 = await backend.complete(msgs, **kwargs)
-    r2 = await backend.complete(msgs, **kwargs)
-    assert r1 == r2
-
-
-@pytest.mark.asyncio
-async def test_mock_backend_varies_with_input():
-    """Different inputs should (usually) produce different outputs."""
-    backend = MockLLMBackend()
-    r1 = await backend.complete([{"role": "user", "content": "Topic A"}])
-    r2 = await backend.complete([{"role": "user", "content": "Topic B"}])
-    # Not guaranteed to differ for all inputs, but overwhelmingly likely
-    # with SHA-256 seeding. We test it's not trivially broken.
-    assert isinstance(r1, str) and isinstance(r2, str)
-
-
-def test_mock_backend_token_count():
-    backend = MockLLMBackend()
-    count = backend.token_count("hello world this is a test")
-    assert isinstance(count, int)
-    assert count > 0
-
-
-@pytest.mark.asyncio
-async def test_mock_backend_tracks_call_count():
-    backend = MockLLMBackend()
-    assert backend.call_count == 0
-    await backend.complete([{"role": "user", "content": "test"}])
-    await backend.complete([{"role": "user", "content": "test2"}])
-    assert backend.call_count == 2
-
-
-# ── Agent async tests ────────────────────────────────────────────────────────
-
-@pytest.mark.asyncio
-async def test_agent_respond_async():
-    """Agent.respond is now async and returns the expected dict shape."""
-    backend = MockLLMBackend()
-    config = AgentConfig(agent_id="agent_0", role_bias="proposer", memory_enabled=False)
-    agent = Agent(config, backend)
-
-    result = await agent.respond(
-        [{"role": "user", "content": "Discuss climate policy."}],
-        round_id=0,
-        task_id="task_0000",
+def _cfg(condition: str = "A", *, num_rounds: int = 2, seed: int = 42) -> CellConfig:
+    return CellConfig(
+        backend="stub",
+        condition=condition,
+        seed=seed,
+        num_rounds=num_rounds,
+        turns_per_round=2,
+        num_agents=3,
+        influence_every_n=1,   # measure every round so probes always fire
+        k_samples=1,
     )
 
-    assert result["agent_id"] == "agent_0"
-    assert result["role_bias"] == "proposer"
-    assert result["model"] == "mock-v1"
-    assert isinstance(result["response_text"], str)
-    assert result["token_count"] is not None
-    assert result["latency_s"] >= 0
+
+def _event_counts(run_dir) -> Counter:
+    return Counter(e["event_type"] for e in load_events(run_dir / "events.jsonl"))
 
 
-# ── Turn order rotation tests ────────────────────────────────────────────────
-
-@pytest.mark.asyncio
-async def test_turn_order_rotation():
-    """Verify that the starting agent rotates every round."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        config = ExperimentConfig(
-            num_agents=3,
-            num_rounds=6,  # 6 rounds = each agent starts exactly twice
-            turns_per_round=1,
-            memory_enabled=False,
-            backend="mock",
-            condition="test_rotation",
-            output_dir=tmpdir,
-        )
-        runner = ExperimentRunner(config)
-        run_dir = await runner.run_async()
-
-        events = load_events(run_dir / "events.jsonl")
-        agent_messages = [e for e in events if e.get("event_type") == "agent_message"]
-
-        # With 3 agents and 1 turn per round, we get 3 messages per round.
-        # Check who speaks first in each round.
-        # round_id and agent_id are top-level fields in the event schema.
-        first_speakers_by_round: dict[int, str] = {}
-        for msg in agent_messages:
-            rid = msg.get("round_id")
-            aid = msg.get("agent_id")
-            if rid is not None and rid not in first_speakers_by_round:
-                first_speakers_by_round[rid] = aid
-
-        # Round 0: offset=0 → agent_0 first
-        # Round 1: offset=1 → agent_1 first
-        # Round 2: offset=2 → agent_2 first
-        # Round 3: offset=0 → agent_0 first (wraps)
-        assert first_speakers_by_round[0] == "agent_0"
-        assert first_speakers_by_round[1] == "agent_1"
-        assert first_speakers_by_round[2] == "agent_2"
-        assert first_speakers_by_round[3] == "agent_0"
+# ── condition A: full lifecycle ───────────────────────────────────────────────
 
 
-# ── Full pipeline integration test ──────────────────────────────────────────
+def test_condition_a_runs_to_done(tmp_path):
+    cfg = _cfg("A")
+    run_dir = tmp_path / cfg.cell_id()
+    res = CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
 
-@pytest.mark.asyncio
-async def test_full_pipeline_with_mock():
-    """Run a complete 5-round experiment with mock backend and verify logs."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        config = ExperimentConfig(
-            num_agents=3,
-            num_rounds=5,
-            turns_per_round=2,
-            memory_enabled=True,
-            memory_max_entries=50,
-            backend="mock",
-            condition="memory_enabled",
-            seed=42,
-            output_dir=tmpdir,
-        )
-        runner = ExperimentRunner(config)
-        run_dir = await runner.run_async()
-
-        # Verify log file exists and is valid JSONL
-        log_path = run_dir / "events.jsonl"
-        assert log_path.exists()
-
-        events = load_events(log_path)
-        event_types = [e["event_type"] for e in events]
-
-        # Must have the full lifecycle
-        assert "run_start" in event_types
-        assert "experiment_config" in event_types
-        assert "round_start" in event_types
-        assert "agent_message" in event_types
-        assert "memory_write" in event_types
-        assert "round_end" in event_types
-        assert "run_end" in event_types
-
-        # 5 rounds × 2 turns × 3 agents = 30 agent messages
-        agent_msgs = [e for e in events if e["event_type"] == "agent_message"]
-        assert len(agent_msgs) == 30
-
-        # Every agent message has the required fields
-        for msg in agent_msgs:
-            data = msg.get("data", msg)
-            assert "agent_id" in data or "agent_id" in msg
-            assert "response_text" in data
-            assert "token_count" in data
-            assert "model" in data
-
-        # Memory files should exist for each agent
-        for i in range(3):
-            mem_path = run_dir / "memory" / f"agent_{i}.jsonl"
-            assert mem_path.exists()
+    assert res.status == "done"
+    assert res.rounds_done == cfg.num_rounds == 2
+    assert res.rounds_total == 2
+    assert (run_dir / "events.jsonl").exists()
+    assert (run_dir / "status.json").exists()
 
 
-@pytest.mark.asyncio
-async def test_no_memory_condition():
-    """No-memory control: verify memory is cleared after each round."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        config = ExperimentConfig(
-            num_agents=2,
-            num_rounds=3,
-            turns_per_round=1,
-            memory_enabled=False,
-            backend="mock",
-            condition="no_memory",
-            seed=99,
-            output_dir=tmpdir,
-        )
-        runner = ExperimentRunner(config)
-        await runner.run_async()
+def test_condition_a_event_lifecycle(tmp_path):
+    cfg = _cfg("A")
+    run_dir = tmp_path / cfg.cell_id()
+    CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
 
-        # Agents should have no accumulated memory
-        for agent in runner.agents:
-            if agent.memory:
-                assert agent.memory.count() == 0
+    counts = _event_counts(run_dir)
+    # config logged exactly once; full lifecycle present.
+    assert counts["experiment_config"] == 1
+    assert counts["run_start"] == 1
+    assert counts["run_end"] == 1
+    assert counts["round_start"] == 2 and counts["round_end"] == 2
+    # 2 rounds × 2 turns × 3 agents.
+    assert counts["agent_message"] == 12
+    # condition A has memory enabled -> one write per agent message.
+    assert counts["memory_write"] == 12
+    # influence probe fires every (measured) round.
+    assert counts["influence_probe_start"] == 2
+    assert counts["influence_probe_factual"] > 0
+    assert counts["influence_probe_ablated"] > 0
 
 
-@pytest.mark.asyncio
-async def test_config_validation():
-    """ExperimentConfig rejects invalid settings."""
-    with pytest.raises(ValueError, match="at least 2 agents"):
-        ExperimentConfig(num_agents=1).validate()
+def test_condition_b_has_no_memory_writes(tmp_path):
+    cfg = _cfg("B")
+    run_dir = tmp_path / cfg.cell_id()
+    res = CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
 
-    with pytest.raises(ValueError, match="role_biases length"):
-        ExperimentConfig(num_agents=3, role_biases=["proposer"]).validate()
+    assert res.status == "done"
+    counts = _event_counts(run_dir)
+    assert counts["memory_write"] == 0           # memory disabled in B
+    assert counts["agent_message"] == 12          # deliberation still happens
 
-    with pytest.raises(ValueError, match="Unknown backend"):
-        ExperimentConfig(backend="gpt-magic").validate()
+
+def test_unknown_condition_raises(tmp_path):
+    cfg = _cfg("Z")
+    try:
+        CellRunner(cfg, StubProvider(), tmp_path / "z", verbose=False)
+    except ValueError as e:
+        assert "condition" in str(e).lower()
+    else:  # pragma: no cover - guard
+        raise AssertionError("expected ValueError for unknown condition")
+
+
+# ── checkpoint / resume ───────────────────────────────────────────────────────
+
+
+def test_resume_when_already_complete_is_idempotent(tmp_path):
+    cfg = _cfg("A")
+    run_dir = tmp_path / cfg.cell_id()
+    CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
+    before = _event_counts(run_dir)
+
+    # A second runner over the same dir must short-circuit, not re-run or duplicate.
+    res2 = CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
+    after = _event_counts(run_dir)
+
+    assert res2.status == "done"
+    assert res2.rounds_done == cfg.num_rounds
+    assert after == before  # no duplicated events
+
+
+def test_resume_from_partial_completes(tmp_path):
+    run_dir = tmp_path / "stub_A_seed42"
+    # First pass: only 1 round.
+    CellRunner(_cfg("A", num_rounds=1), StubProvider(), run_dir, verbose=False).run()
+    # Second pass on the same dir wants 2 rounds; it should resume from round 1.
+    res = CellRunner(_cfg("A", num_rounds=2), StubProvider(), run_dir, verbose=False).run()
+
+    assert res.status == "done"
+    assert res.rounds_done == 2
+    counts = _event_counts(run_dir)
+    assert counts["experiment_config"] == 1   # not re-logged on resume
+    assert counts["agent_message"] == 12       # round 0 + round 1, no duplication
+    assert counts["round_end"] == 2
+
+
+# ── named ablation hook (brief §4.3) ──────────────────────────────────────────
+
+
+def test_rerun_target_with_ablation_shape(tmp_path):
+    cfg = _cfg("A")
+    runner = CellRunner(cfg, StubProvider(), tmp_path / cfg.cell_id(), verbose=False)
+    out = runner.rerun_target_with_ablation("agent_0", "agent_1", round_id=0)
+
+    assert set(out) == {"factual", "ablated"}
+    assert out["factual"] and out["ablated"]
+    assert all(isinstance(t, str) for t in out["factual"] + out["ablated"])
+
+
+# ── metrics bridge ────────────────────────────────────────────────────────────
+
+
+def test_analyze_cell_after_run(tmp_path):
+    cfg = _cfg("A")
+    run_dir = tmp_path / cfg.cell_id()
+    CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
+
+    out = analyze_cell(run_dir)
+    summary = out["summary"]
+    assert summary["backend"] == "stub"
+    assert summary["condition"] == "A"
+    assert summary["seed"] == 42
+    assert summary["influence_available"] is True
+    assert "report" in out

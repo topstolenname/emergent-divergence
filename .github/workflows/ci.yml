@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv pip install --system -e ".[dev]"
+
+      - name: Lint (ruff)
+        run: ruff check src tests
+
+      - name: Unit tests
+        run: pytest -q
+
+      - name: Offline smoke run (no API, free)
+        run: python -m emergent_divergence pipeline --smoke --skip-tests
+
+      - name: Assert smoke artifacts exist
+        run: |
+          test -f data/reports/smoke/results.csv
+          test -f data/reports/smoke/statistics.json
+          test -f data/reports/smoke/RUN_MANIFEST.json
+          test -f data/reports/smoke/RESULTS_SUMMARY.md
