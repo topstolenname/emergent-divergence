@@ -1,99 +1,114 @@
 # Emergent Behavioral Divergence in Coordinated Multi-Agent Systems
 
-**An empirical experiment testing whether multiple instances of the same base LLM develop measurable behavioral divergence under structured coordination with persistent memory.**
+**An empirical experiment: do multiple instances of the *same* base LLM, coordinating over many rounds, develop measurable behavioral divergence — and does cross-agent influence drive it?**
 
-## Research Question
-
-> Do multiple instances of the same base LLM develop measurable and stable behavioral divergence when coordinating on repeated tasks under shared system constraints?
-
-## Quick Start
+## Quickstart
 
 ```bash
-# Install
+cp .env.example .env          # optional: add ANTHROPIC_API_KEY for the paid arm
+./run_all.sh --smoke          # free, offline, <1 min — proves the whole pipeline
+./run_all.sh                  # full matrix; writes the complete report package
+```
+
+`run_all.sh` creates the virtualenv, installs dependencies on first run, runs the
+test gate, executes the matrix, computes metrics, and leaves a self-contained
+report under `data/reports/<run_id>/`. It is resumable: `Ctrl-C` and re-run with
+`--run-id <id>` to continue without losing work or double-counting spend.
+
+## What it measures
+
+Three instances of one base model take fixed roles — **Proposer**, **Critic**,
+**Synthesizer** — and deliberate over `T=50` rounds of multi-turn claim analysis.
+We measure how their behavior diverges and how much each agent moves the others.
+
+**Backends (run side by side):**
+- `ollama` — `llama3.2:3b`, local and free
+- `claude` — `claude-sonnet-4-6`, frontier API, paid (governed by a $50 cap)
+- `stub`   — deterministic offline provider for `--smoke` and tests
+
+**Conditions:**
+- **A** — persistent memory + weak role priors
+- **B** — memory disabled (context reset each round) + weak priors
+- **C** — persistent memory + zero priors (generic identical agents)
+
+**Matrix:** 2 backends × 3 conditions × 4 seeds `[42, 43, 44, 45]` = **24 cells**.
+Hypotheses are reported **per backend** so the small local model and the frontier
+model are never pooled.
+
+## Hypotheses
+
+| ID | Statement | Test |
+|----|-----------|------|
+| H1 | Linguistic divergence increases over time | Spearman ρ on pairwise token-JSD |
+| H2 | Behavioral role specialization emerges | role-profile divergence score |
+| H3 | Semantic divergence increases over time | MiniLM cosine distance, ρ over rounds |
+| H4 | Memory amplifies divergence (A > B) | cross-condition effect size |
+| H5 | Divergence emerges without role priors (C) | divergence under generic agents |
+| H-I1 | Memory amplifies influence (A > B) | influence-delta, A vs B |
+| H-I2 | Influence concentrates on a hub | Gini of the influence matrix |
+| H-I3 | Influence precedes divergence | lagged correlation |
+
+> **Honesty constraint:** the influence-delta metric measures **influence, not
+> manipulation**. It is never silently relabeled; the report's Limitations section
+> states this explicitly.
+
+## Report package
+
+Every run writes to `data/reports/<run_id>/`:
+
+| File | Contents |
+|------|----------|
+| `results.csv` / `results.json` | one row per cell: metrics + run provenance |
+| `statistics.json` | cross-cell statistics and per-backend hypothesis verdicts |
+| `RESULTS_SUMMARY.md` | human-readable verdict tables + integrity summary |
+| `RUN_MANIFEST.json` | config, preflight, test gate, cost estimate vs actual, integrity |
+| `cell_reports.json` | rich per-cell appendix material |
+
+## Configuration
+
+One file is the source of truth: [`configs/pipeline.yaml`](configs/pipeline.yaml).
+Precedence (low → high): packaged defaults → `pipeline.yaml` → environment
+(`ROUNDS`, `SEEDS`, `COST_CAP_USD`, `INFLUENCE_EVERY_N`, `K_SAMPLES`) → CLI flags →
+`--smoke` clamps. See [`.env.example`](.env.example) for the env knobs.
+
+```bash
+./run_all.sh --backends ollama          # free local arm only
+./run_all.sh --cap-usd 5                 # tighter budget; matrix auto-reduces to fit
+./run_all.sh --conditions A B --seeds 42 # a focused slice
+```
+
+## Cost governance
+
+Free backends cost $0. The Claude arm is metered against a hard `$50` cap. Before
+any paid generation the pipeline (1) runs the test gate — failing tests **STOP**
+the run when a paid backend is enabled — and (2) estimates spend, auto-reducing
+the matrix (seeds first, then rounds) until it fits the cap. Actual spend is
+checkpointed to `cost_snapshot.json` so resumed runs never double-count.
+
+## Commands
+
+```bash
+python -m emergent_divergence pipeline [--smoke] [--run-id ID] [flags]   # the matrix
+python -m emergent_divergence run --backend stub --condition A --seed 42 # one cell
+python -m emergent_divergence analyze --run-dir <dir> [--semantic]       # re-analyze
+python -m emergent_divergence compare --runs <dirA> <dirB>               # two runs
+```
+
+## Development
+
+```bash
 pip install -e ".[dev]"
-
-# Run a pilot (30 rounds, 3 agents, memory enabled)
-python -m emergent_divergence run --config configs/memory_enabled.yaml --rounds 30
-
-# Run the no-memory control
-python -m emergent_divergence run --config configs/no_memory.yaml --rounds 30
-
-# Analyze results
-python -m emergent_divergence analyze --run-dir data/raw_logs/<run_id>
-
-# Compare conditions
-python -m emergent_divergence compare --runs data/raw_logs/<run_a> data/raw_logs/<run_b>
+pytest -q          # full unit + integration suite
+ruff check src tests
 ```
 
-## Experimental Design
+CI (`.github/workflows/ci.yml`) runs lint, the test suite, and an offline
+`--smoke` run on Python 3.10 and 3.12, then asserts the report artifacts exist.
 
-- **3 agents** (same base LLM) with weak role priors: Proposer, Critic, Synthesizer
-- **Condition A**: Memory-enabled coordination (agents retain context across rounds)
-- **Condition B**: No-memory control (agents reset each round)
-- **Task**: Multi-turn collaborative claim analysis requiring disagreement and synthesis
-- **Rounds**: 30 (pilot) → 100+ (full experiment)
-- **Metrics**: Linguistic divergence (JSD), behavioral specialization, memory usage patterns, coordination structure
+## Non-goals
 
-## Project Structure
-
-```
-emergent-divergence/
-├── configs/               # Experiment configurations (YAML)
-├── src/
-│   ├── agents/            # Agent instantiation and LLM interface
-│   ├── memory/            # Lightweight persistent per-agent memory
-│   ├── tasks/             # Task generation and round management
-│   ├── orchestration/     # Multi-agent coordination loop
-│   ├── logging_/          # Structured JSONL event logging
-│   ├── metrics/           # Divergence and specialization metrics
-│   ├── evaluation/        # Optional LLM-judge scoring hooks
-│   └── cli/               # CLI runner
-├── experiments/           # Notebooks and pilot run outputs
-├── data/                  # Raw logs, processed data, reports
-└── tests/                 # Unit and integration tests
-```
-
-## Pilot Results (Memory Enabled, Seed 42, 50 Rounds)
-
-> **Status**: Pilot complete. Control condition (no-memory) pending. Full multi-seed runs not yet complete.
-
-| Hypothesis | Finding | Status |
-|------------|---------|--------|
-| H1 — Linguistic divergence increases over time | Spearman ρ=0.511, p=0.0007 across 40 sliding windows | ✅ Supported |
-| H2 — Behavioral role specialization emerges | Divergence score=0.154; agents differentiate along role lines | ✅ Moderate support |
-| H3 — Memory amplifies divergence vs. control | No-memory control incomplete (API credits exhausted after 4 rounds) | ⏳ Pending |
-| H4 — Coordination structure becomes non-uniform | Fixed turn-order design prevents testing | 🚫 Not testable (by design) |
-
-### Key Metrics (Run `run_20260310_161255_db9f7b49`, 49 rounds)
-
-- **Mean pairwise JSD**: 0.2935 (Agent 0 vs 1: 0.299 | Agent 0 vs 2: 0.287 | Agent 1 vs 2: 0.295)
-- **JSD trajectory**: Rises ~5.5% from early windows (0.382) to peak ~rounds 20–30 (0.403), then stabilizes (~0.392)
-- **Behavioral divergence score**: 0.154 (mean pairwise L2 distance between role profiles)
-- **Lexical uniqueness**: Agent 0: 20.2% | Agent 1: 22.0% | Agent 2: 19.6%
-
-See [`data/reports/pilot_analysis_report.md`](data/reports/pilot_analysis_report.md) for full analysis.
-
-### Next Steps
-
-1. Top up API credits and run no-memory control (Condition B, ~$3, ~1 hour)
-2. Run seeds 43–45 for both conditions
-3. Generate visualizations: `python scripts/generate_figures.py --run-dir data/raw_logs/<run_id>`
-
-## Non-Goals
-
-This experiment does **not** test consciousness, selfhood, AGI, or validate the full AGI-SAC architecture. It tests one narrow empirical claim about behavioral divergence.
-
-## Success Criteria
-
-Evidence that at least one of:
-- Agents become measurably more linguistically distinct over time
-- Agents stabilize into differentiated behavioral roles
-- Persistent memory increases divergence relative to controls
-- Coordination structure becomes non-uniform and repeatable
-
-## Lineage
-
-Extracted from the [AGI-SAC](https://github.com/topstolenname/agisa_sac) research framework as a minimal empirical bridge experiment.
+This experiment does **not** test consciousness, selfhood, or AGI. It tests narrow,
+falsifiable claims about behavioral divergence and cross-agent influence.
 
 ## License
 

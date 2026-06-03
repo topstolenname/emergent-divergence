@@ -1,0 +1,52 @@
+# Single source of truth for the one-button matrix run (brief §10).
+#
+#   python -m emergent_divergence pipeline            # full matrix
+#   python -m emergent_divergence pipeline --smoke     # fast offline proof
+#
+# Environment variables override these (ROUNDS, SEEDS, COST_CAP_USD,
+# INFLUENCE_EVERY_N, K_SAMPLES); CLI flags override the environment.
+
+# The 2 × 3 × 4 matrix: backends × conditions × seeds = 24 cells.
+backends: [ollama, claude]
+conditions: [A, B, C]          # A: memory+priors  B: no-memory+priors  C: memory+no-priors
+seeds: [42, 43, 44, 45]
+
+rounds: 50                     # rounds of multi-turn deliberation per cell
+turns_per_round: 2
+temperature: 1.0
+max_tokens: 400
+num_agents: 3
+
+# Influence-probe controls (the cost driver on the paid arm).
+influence_every_n: 5           # run the counterfactual probe every Nth round
+k_samples:                     # MC samples per probe; Claude gets more for token-JSD
+  ollama: 1
+  claude: 3
+  stub: 1
+ablation: neutral              # "neutral" (replace source with [no input]) | "drop"
+
+# Robustness.
+retries: 2
+retry_backoff_s: 2.0
+
+# Where cell logs and the report package land.
+output_root: data/raw_logs
+report_root: data/reports
+
+# Cost governance (brief §6). Free backends are $0; only Claude accrues spend.
+# Verify prices against current Anthropic listings before a paid run.
+cost:
+  cap_usd: 50.0
+  prices:
+    claude:
+      input_per_mtok: 3.0
+      output_per_mtok: 15.0
+
+backends_cfg:
+  ollama:
+    model: llama3.2:3b
+    host: http://localhost:11434
+  claude:
+    model: claude-sonnet-4-6
+  stub:
+    model: stub-v1
