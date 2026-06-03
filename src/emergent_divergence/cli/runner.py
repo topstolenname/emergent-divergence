@@ -74,14 +74,14 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     ld = report.get("linguistic_divergence", {})
     bs = report.get("behavioral_specialization", {})
     print(f"\n{'=' * 60}")
-    print(f"  ANALYSIS SUMMARY")
+    print("  ANALYSIS SUMMARY")
     print(f"{'=' * 60}")
     print(f"  Total messages: {report.get('total_messages', 0)}")
     print(f"  Agent count:    {report.get('agent_count', 0)}")
-    print(f"\n  Linguistic Divergence:")
+    print("\n  Linguistic Divergence:")
     print(f"    Mean JSD:           {ld.get('mean_jsd', 'N/A')}")
     print(f"    Lexical uniqueness: {ld.get('lexical_uniqueness', {})}")
-    print(f"\n  Behavioral Specialization:")
+    print("\n  Behavioral Specialization:")
     print(f"    Divergence score:   {bs.get('divergence_score', 'N/A')}")
     for aid, prof in bs.get("profiles", {}).items():
         top = sorted(prof.items(), key=lambda x: x[1], reverse=True)[:3]
@@ -89,7 +89,7 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         print(f"    {aid}: {top_str}")
     sd = report.get("semantic_divergence", {})
     if sd and "error" not in sd:
-        print(f"\n  Semantic Divergence:")
+        print("\n  Semantic Divergence:")
         print(f"    Mean cosine distance: {sd.get('mean_cosine_distance', 'N/A')}")
         for pair, ps in sd.get("pairwise_summaries", {}).items():
             print(f"    {pair}: mean={ps['mean']}, trend={ps['trend']:+.6f}")

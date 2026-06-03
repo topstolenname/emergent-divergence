@@ -588,7 +588,7 @@ def _render_html(run_id, summaries, stats, results, figures) -> str:
     p.append("<!doctype html><html><head><meta charset='utf-8'>")
     p.append(f"<title>Emergent Divergence — {html.escape(run_id)}</title>")
     p.append(f"<style>{_CSS}</style></head><body>")
-    p.append(f"<h1>Emergent Divergence — Report</h1>")
+    p.append("<h1>Emergent Divergence — Report</h1>")
     p.append(f"<p><em>run <code>{html.escape(run_id)}</code> · generated "
              f"{datetime.now(timezone.utc).isoformat()}</em></p>")
     p.append("<h2>Abstract</h2>")
@@ -712,24 +712,30 @@ def _md_block_to_html(md: str) -> str:
     for raw in md.splitlines():
         ln = raw.rstrip()
         if ln.startswith("|"):
-            flush_para(); flush_list()
+            flush_para()
+            flush_list()
             table_buf.append(ln)
             continue
         flush_table()
         if ln.startswith("## "):
-            flush_para(); flush_list()
+            flush_para()
+            flush_list()
             html_parts.append(f"<h2>{_md_inline(ln[3:])}</h2>")
         elif ln.startswith("### "):
-            flush_para(); flush_list()
+            flush_para()
+            flush_list()
             html_parts.append(f"<h3>{_md_inline(ln[4:])}</h3>")
         elif ln.startswith("- "):
             flush_para()
             list_buf.append(ln[2:])
         elif not ln.strip():
-            flush_para(); flush_list()
+            flush_para()
+            flush_list()
         else:
             buf.append(ln.strip())
-    flush_para(); flush_list(); flush_table()
+    flush_para()
+    flush_list()
+    flush_table()
     return "".join(html_parts)
 
 

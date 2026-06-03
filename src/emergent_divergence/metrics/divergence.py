@@ -10,7 +10,6 @@ D. Coordination structure (interaction graph properties)
 from __future__ import annotations
 
 import json
-import math
 import re
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -18,8 +17,6 @@ from typing import Any
 
 import numpy as np
 from scipy.spatial.distance import jensenshannon
-from scipy.stats import entropy
-
 
 # ── Log Loading ───────────────────────────────────────────────────────────────
 
@@ -214,9 +211,6 @@ BEHAVIOR_KEYWORDS: dict[str, list[str]] = {
 def classify_message_behavior(text: str) -> dict[str, float]:
     """Classify a message into behavioral categories based on keyword density."""
     text_lower = text.lower()
-    tokens = _tokenize(text_lower)
-    total = len(tokens) if tokens else 1
-
     scores = {}
     for category, keywords in BEHAVIOR_KEYWORDS.items():
         count = sum(1 for kw in keywords if kw in text_lower)
@@ -225,7 +219,9 @@ def classify_message_behavior(text: str) -> dict[str, float]:
     return scores
 
 
-def compute_behavioral_profiles(agent_messages: dict[str, list[dict]]) -> dict[str, dict[str, float]]:
+def compute_behavioral_profiles(
+    agent_messages: dict[str, list[dict]],
+) -> dict[str, dict[str, float]]:
     """Compute per-agent behavioral profile as averaged category scores."""
     profiles = {}
     for aid, msgs in agent_messages.items():
@@ -305,8 +301,6 @@ def compute_memory_stats(log_path: Path) -> dict[str, dict[str, Any]]:
 
 def compute_turn_order_stats(agent_messages: dict[str, list[dict]]) -> dict[str, Any]:
     """Analyze who speaks when and basic coordination patterns."""
-    agent_ids = sorted(agent_messages.keys())
-
     # Count messages per agent
     msg_counts = {aid: len(msgs) for aid, msgs in agent_messages.items()}
 
@@ -429,8 +423,12 @@ def compare_conditions(report_a: dict, report_b: dict) -> dict[str, Any]:
             "condition_b_mean_jsd": report_b.get("linguistic_divergence", {}).get("mean_jsd", 0),
         },
         "behavioral_divergence_comparison": {
-            "condition_a": report_a.get("behavioral_specialization", {}).get("divergence_score", 0),
-            "condition_b": report_b.get("behavioral_specialization", {}).get("divergence_score", 0),
+            "condition_a": report_a.get("behavioral_specialization", {}).get(
+                "divergence_score", 0
+            ),
+            "condition_b": report_b.get("behavioral_specialization", {}).get(
+                "divergence_score", 0
+            ),
         },
         "message_counts": {
             "condition_a": report_a.get("total_messages", 0),
