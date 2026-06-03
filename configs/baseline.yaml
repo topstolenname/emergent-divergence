@@ -1,0 +1,12 @@
+# Baseline experiment config (shared defaults)
+num_agents: 3
+role_biases:
+  - proposer
+  - critic
+  - synthesizer
+model: "claude-sonnet-4-20250514"
+max_tokens: 1024
+temperature: 1.0
+turns_per_round: 2
+seed: 42
+output_dir: "data/raw_logs"

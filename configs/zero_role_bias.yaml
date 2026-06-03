@@ -1,0 +1,20 @@
+# Condition C: Zero role-bias control
+# Memory enabled but all agents receive identical generic prompts
+# Tests whether divergence emerges WITHOUT initial role differentiation
+# backend: "claude-code" uses Max/Pro subscription (no API credits needed)
+#          "anthropic" uses API credits from console.anthropic.com
+num_agents: 3
+role_biases:
+  - generic
+  - generic
+  - generic
+memory_enabled: true
+memory_max_entries: 200
+model: "claude-sonnet-4-20250514"
+max_tokens: 1024
+temperature: 1.0
+num_rounds: 100
+turns_per_round: 2
+condition: "zero_role_bias"
+seed: 42
+output_dir: "data/raw_logs"
