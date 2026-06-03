@@ -9,9 +9,8 @@ from __future__ import annotations
 
 import random
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
-
 
 # ── Claim Bank ────────────────────────────────────────────────────────────────
 # Claims are designed to be non-trivial, requiring genuine deliberation.
@@ -24,12 +23,18 @@ CLAIM_BANK: list[dict[str, Any]] = [
         "difficulty": "medium",
     },
     {
-        "claim": "Universal basic income would reduce innovation by lowering economic pressure to work.",
+        "claim": (
+            "Universal basic income would reduce innovation by lowering economic"
+            " pressure to work."
+        ),
         "domain": "economics",
         "difficulty": "hard",
     },
     {
-        "claim": "The replication crisis in psychology has been largely resolved by pre-registration mandates.",
+        "claim": (
+            "The replication crisis in psychology has been largely resolved by"
+            " pre-registration mandates."
+        ),
         "domain": "science",
         "difficulty": "medium",
     },
@@ -39,7 +44,10 @@ CLAIM_BANK: list[dict[str, Any]] = [
         "difficulty": "medium",
     },
     {
-        "claim": "Teaching critical thinking skills is more effective than teaching domain-specific knowledge.",
+        "claim": (
+            "Teaching critical thinking skills is more effective than teaching"
+            " domain-specific knowledge."
+        ),
         "domain": "education",
         "difficulty": "hard",
     },
@@ -49,7 +57,10 @@ CLAIM_BANK: list[dict[str, Any]] = [
         "difficulty": "medium",
     },
     {
-        "claim": "Open source software development produces higher quality code than proprietary development.",
+        "claim": (
+            "Open source software development produces higher quality code than"
+            " proprietary development."
+        ),
         "domain": "technology",
         "difficulty": "medium",
     },
@@ -64,22 +75,34 @@ CLAIM_BANK: list[dict[str, Any]] = [
         "difficulty": "medium",
     },
     {
-        "claim": "Microservices architecture is overused and monoliths are better for most organizations.",
+        "claim": (
+            "Microservices architecture is overused and monoliths are better for"
+            " most organizations."
+        ),
         "domain": "technology",
         "difficulty": "medium",
     },
     {
-        "claim": "Peer review as currently practiced is fundamentally broken and should be replaced.",
+        "claim": (
+            "Peer review as currently practiced is fundamentally broken and should"
+            " be replaced."
+        ),
         "domain": "science",
         "difficulty": "hard",
     },
     {
-        "claim": "Emotional intelligence is a better predictor of leadership effectiveness than IQ.",
+        "claim": (
+            "Emotional intelligence is a better predictor of leadership"
+            " effectiveness than IQ."
+        ),
         "domain": "organizational",
         "difficulty": "medium",
     },
     {
-        "claim": "Most cybersecurity breaches are caused by human error rather than technical vulnerabilities.",
+        "claim": (
+            "Most cybersecurity breaches are caused by human error rather than"
+            " technical vulnerabilities."
+        ),
         "domain": "technology",
         "difficulty": "easy",
     },
@@ -109,12 +132,18 @@ CLAIM_BANK: list[dict[str, Any]] = [
         "difficulty": "medium",
     },
     {
-        "claim": "Democratic decision-making leads to worse outcomes than expert-driven decisions in technical domains.",
+        "claim": (
+            "Democratic decision-making leads to worse outcomes than expert-driven"
+            " decisions in technical domains."
+        ),
         "domain": "governance",
         "difficulty": "hard",
     },
     {
-        "claim": "Most organizational meetings could be replaced by asynchronous communication without productivity loss.",
+        "claim": (
+            "Most organizational meetings could be replaced by asynchronous"
+            " communication without productivity loss."
+        ),
         "domain": "organizational",
         "difficulty": "easy",
     },

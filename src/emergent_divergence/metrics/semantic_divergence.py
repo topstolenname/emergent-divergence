@@ -20,7 +20,6 @@ from typing import Any
 
 import numpy as np
 
-
 # ── Log Loading (mirrors divergence.py helpers) ─────────────────────────────
 
 def _load_agent_responses(log_path: Path) -> dict[str, list[dict]]:
@@ -109,7 +108,6 @@ def compute_per_round_cosine_distances(
     rounds_sorted = sorted(all_rounds)
 
     # Compute per-round distances for each pair
-    pair_labels = [f"{a1}_vs_{a2}" for a1, a2 in combinations(agent_ids, 2)]
     rows = []
 
     for pair_a1, pair_a2 in combinations(agent_ids, 2):

@@ -21,7 +21,6 @@ from emergent_divergence.metrics.influence_delta import (
     semantic_delta,
 )
 
-
 # ── gini ──────────────────────────────────────────────────────────────────────
 
 

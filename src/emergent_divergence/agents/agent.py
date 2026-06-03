@@ -156,6 +156,7 @@ class Agent:
             "provider": gen.provider,
             "seed": seed,
             "generation": gen,
+            "memory_reads": memory_reads,
         }
 
     def write_memory(self, round_id: int, content: str, source: str = "self") -> None:

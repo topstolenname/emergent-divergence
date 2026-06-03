@@ -114,7 +114,7 @@ class CostGovernor:
         os.replace(tmp, path)
 
     @classmethod
-    def from_file(cls, path: Path) -> "CostGovernor":
+    def from_file(cls, path: Path) -> CostGovernor:
         gov = cls()
         snap = json.loads(Path(path).read_text())
         gov.load_snapshot(snap)
