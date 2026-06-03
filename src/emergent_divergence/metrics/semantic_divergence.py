@@ -3,7 +3,10 @@
 Supplements the keyword-based behavioral classification (Metric B) with
 dense vector representations that capture semantic trajectory over time.
 
-Requires: pip install sentence-transformers  (or install with [analysis] extra)
+All embeddings come from the shared :class:`Embedder` (MiniLM primary, a
+deterministic hashing fallback when sentence-transformers is unavailable), so
+the numbers are identical across the Ollama and Claude arms and never hard-fail
+offline. The active backend is disclosed in the run manifest and report.
 """
 
 from __future__ import annotations
@@ -46,33 +49,22 @@ def _load_agent_responses(log_path: Path) -> dict[str, list[dict]]:
 
 # ── Embedding ────────────────────────────────────────────────────────────────
 
-def _get_embedder():
-    """Load sentence-transformers model (cached after first call)."""
-    try:
-        from sentence_transformers import SentenceTransformer
-    except ImportError:
-        raise ImportError(
-            "sentence-transformers is required for semantic analysis. "
-            "Install with: pip install sentence-transformers"
-        )
-    return SentenceTransformer("all-MiniLM-L6-v2")
-
-
 def compute_embeddings(
     agent_responses: dict[str, list[dict]],
 ) -> dict[str, np.ndarray]:
-    """Compute embeddings for all agent responses.
+    """Compute embeddings for all agent responses via the shared Embedder.
 
-    Returns dict of agent_id -> (N, D) array where N = number of messages.
+    Returns dict of agent_id -> (N, EMBED_DIM) array where N = number of messages.
     """
-    model = _get_embedder()
+    from emergent_divergence.embeddings import EMBED_DIM, get_embedder
+
+    embedder = get_embedder()
     result = {}
     for aid, responses in agent_responses.items():
         texts = [r["text"] for r in responses]
-        if texts:
-            result[aid] = model.encode(texts, show_progress_bar=False)
-        else:
-            result[aid] = np.empty((0, 384))
+        result[aid] = (
+            embedder.embed(texts) if texts else np.empty((0, EMBED_DIM), dtype=np.float32)
+        )
     return result
 
 
