@@ -13,32 +13,33 @@ import json
 import sys
 from pathlib import Path
 
-import yaml
-
 
 def cmd_run(args: argparse.Namespace) -> None:
-    """Execute an experiment run."""
-    from emergent_divergence.orchestration.runner import ExperimentConfig, ExperimentRunner
+    """Execute a single matrix cell (backend × condition × seed).
 
-    # Load config from YAML
-    config_path = Path(args.config)
-    if config_path.exists():
-        with open(config_path) as f:
-            cfg_data = yaml.safe_load(f)
-    else:
-        print(f"Config file not found: {config_path}")
+    The full backend×condition×seed sweep lives in the ``pipeline`` command; this
+    is the low-level escape hatch to run one cell to a chosen directory.
+    """
+    from emergent_divergence.orchestration.runner import CellConfig, CellRunner
+    from emergent_divergence.providers import build_provider
+
+    backend = args.backend or "stub"
+    run_dir = Path(args.run_dir or f"data/raw_logs/{backend}_{args.condition}_seed{args.seed}")
+
+    cfg = CellConfig(
+        backend=backend,
+        condition=args.condition,
+        seed=args.seed,
+        num_rounds=args.rounds or 50,
+    )
+    provider = build_provider(backend, {"model": args.model} if args.model else {})
+    result = CellRunner(cfg, provider, run_dir).run()
+
+    print(f"\nCell {result.cell_id}: {result.status} "
+          f"({result.rounds_done}/{result.rounds_total} rounds, ${result.cost_usd:.4f})")
+    print(f"Run dir: {result.run_dir}")
+    if result.status != "done":
         sys.exit(1)
-
-    # CLI overrides
-    if args.rounds:
-        cfg_data["num_rounds"] = args.rounds
-    if args.backend:
-        cfg_data["backend"] = args.backend
-
-    config = ExperimentConfig(**cfg_data)
-    runner = ExperimentRunner(config)
-    run_dir = runner.run()  # synchronous wrapper handles asyncio.run()
-    print(f"\nRun complete: {run_dir}")
 
 
 def cmd_analyze(args: argparse.Namespace) -> None:
@@ -95,6 +96,33 @@ def cmd_analyze(args: argparse.Namespace) -> None:
     print(f"{'=' * 60}")
 
 
+def cmd_pipeline(args: argparse.Namespace) -> None:
+    """Drive the full matrix: preflight → test gate → cost → run → metrics → report."""
+    from emergent_divergence.pipeline import run_pipeline
+
+    overrides: dict = {"smoke": args.smoke}
+    if args.run_id:
+        overrides["run_id"] = args.run_id
+    if args.backends:
+        overrides["backends"] = args.backends
+    if args.conditions:
+        overrides["conditions"] = args.conditions
+    if args.seeds:
+        overrides["seeds"] = args.seeds
+    if args.rounds:
+        overrides["rounds"] = args.rounds
+    if args.cap_usd is not None:
+        overrides["cap_usd"] = args.cap_usd
+
+    code = run_pipeline(
+        config_path=args.config,
+        overrides=overrides,
+        skip_tests=args.skip_tests,
+        no_report=args.no_report,
+    )
+    sys.exit(code)
+
+
 def cmd_compare(args: argparse.Namespace) -> None:
     """Compare two experiment runs."""
     from emergent_divergence.metrics.divergence import (
@@ -134,13 +162,33 @@ def main() -> None:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # run
-    p_run = subparsers.add_parser("run", help="Execute an experiment")
-    p_run.add_argument("--config", required=True, help="Path to YAML config")
-    p_run.add_argument("--rounds", type=int, help="Override number of rounds")
-    p_run.add_argument("--backend", choices=["anthropic", "claude-code", "mock"],
-                       help="Override LLM backend (default: from config)")
+    # run (single cell; the full sweep is `pipeline`)
+    p_run = subparsers.add_parser("run", help="Execute a single cell (backend×condition×seed)")
+    p_run.add_argument("--backend", choices=["stub", "ollama", "claude"], default="stub",
+                       help="Model backend (default: stub)")
+    p_run.add_argument("--condition", choices=["A", "B", "C"], default="A",
+                       help="Experimental condition (default: A)")
+    p_run.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    p_run.add_argument("--rounds", type=int, help="Number of rounds (default: 50)")
+    p_run.add_argument("--model", help="Override the backend model id")
+    p_run.add_argument("--run-dir", dest="run_dir", help="Output directory for this cell")
     p_run.set_defaults(func=cmd_run)
+
+    # pipeline (the one-button matrix driver — brief §5)
+    p_pipe = subparsers.add_parser("pipeline", help="Run the full backend×condition×seed matrix")
+    p_pipe.add_argument("--config", default="configs/pipeline.yaml",
+                        help="Path to pipeline YAML (default: configs/pipeline.yaml)")
+    p_pipe.add_argument("--smoke", action="store_true",
+                        help="Fast offline proof: stub backend, 2 rounds, 1 seed (<1 min)")
+    p_pipe.add_argument("--run-id", dest="run_id", help="Resume/label a specific run")
+    p_pipe.add_argument("--backends", nargs="+", help="Override backends (e.g. ollama claude)")
+    p_pipe.add_argument("--conditions", nargs="+", help="Override conditions (A B C)")
+    p_pipe.add_argument("--seeds", nargs="+", type=int, help="Override seeds")
+    p_pipe.add_argument("--rounds", type=int, help="Override number of rounds")
+    p_pipe.add_argument("--cap-usd", dest="cap_usd", type=float, help="Override the cost cap")
+    p_pipe.add_argument("--skip-tests", action="store_true", help="Skip the pytest gate")
+    p_pipe.add_argument("--no-report", action="store_true", help="Skip full report rendering")
+    p_pipe.set_defaults(func=cmd_pipeline)
 
     # analyze
     p_analyze = subparsers.add_parser("analyze", help="Analyze a completed run")
