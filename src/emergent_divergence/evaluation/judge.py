@@ -1,7 +1,11 @@
-"""Optional LLM-as-judge evaluation hooks.
+"""Optional LLM-as-judge evaluation hooks (early sketch).
 
-Not required for v1 but the interface is defined here so it can be
-wired in later without restructuring.
+NOTE: The implemented LLM-judge *behavioral classifier* now lives in
+:mod:`emergent_divergence.metrics.llm_judge` and is wired into ``analyze`` via
+the ``--classifier`` flag. That module is the production path: a blind,
+six-category classifier parallel to the keyword classifier. The rubric below is
+a retained general-purpose sketch (consistency/quality/engagement scoring) and
+is intentionally left unwired — prefer the metrics module for divergence work.
 """
 
 from __future__ import annotations
