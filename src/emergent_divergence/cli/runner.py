@@ -55,12 +55,13 @@ def cmd_analyze(args: argparse.Namespace) -> None:
 
     print(f"Analyzing: {log_path}")
     classifier = getattr(args, "classifier", "keyword")
+    judge_model = getattr(args, "judge_model", "claude-haiku-4-5-20251001")
     if classifier != "keyword":
-        print(f"  Behavioral classifier: {classifier} (judge model: {args.judge_model})")
+        print(f"  Behavioral classifier: {classifier} (judge model: {judge_model})")
     report = generate_analysis_report(
         log_path,
         classifier=classifier,
-        judge_model=args.judge_model,
+        judge_model=judge_model,
     )
 
     # Semantic analysis (opt-in)

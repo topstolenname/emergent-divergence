@@ -124,6 +124,39 @@ def test_classify_message_returns_none_after_two_failures():
     assert provider.calls == 2
 
 
+def test_classify_message_empty_text_skips_api_call():
+    provider = FakeJudgeProvider(scores={c: 0.9 for c in llm_judge.CATEGORIES})
+    scores = llm_judge.classify_message(provider, "   \n  ")
+    assert scores == {c: 0.0 for c in llm_judge.CATEGORIES}
+    assert provider.calls == 0  # no tokens spent on an empty message
+
+
+class _RaisingProvider:
+    name = "raising"
+    model = "raising-judge"
+
+    def __init__(self):
+        self.calls = 0
+
+    def generate(self, messages, *, seed, temperature, max_tokens, system=""):
+        self.calls += 1
+        raise RuntimeError("simulated API failure")
+
+
+def test_classify_message_provider_exception_is_failure_not_crash():
+    provider = _RaisingProvider()
+    assert llm_judge.classify_message(provider, "real text") is None
+    assert provider.calls == 2  # both attempts tried, then recorded as failure
+
+
+def test_classify_run_survives_provider_exceptions(tmp_path):
+    log_path = _write_log(tmp_path, {"agent_0": ["a", "b"]})
+    # All calls raise -> all messages fail -> failure cap aborts cleanly (no crash).
+    result = llm_judge.classify_run(log_path, _RaisingProvider(), max_failure_rate=0.1)
+    assert "error" in result
+    assert result["classification_failures"] == 2
+
+
 # ── Run-level classification ──────────────────────────────────────────────────
 
 def test_classify_run_builds_profiles_and_divergence(tmp_path):

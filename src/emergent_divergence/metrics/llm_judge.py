@@ -29,6 +29,7 @@ the keyword classifier. See the design spec and the decision record under
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections import defaultdict
 from pathlib import Path
@@ -42,6 +43,8 @@ from emergent_divergence.metrics.divergence import (
 
 if TYPE_CHECKING:
     from emergent_divergence.providers.base import ModelProvider
+
+logger = logging.getLogger(__name__)
 
 # Low-cost, fast default. Overridable via the ``--judge-model`` analyze flag.
 DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
@@ -143,19 +146,33 @@ def classify_message(
     *,
     max_tokens: int = 128,
 ) -> dict[str, float] | None:
-    """Classify one message, retrying once on a parse failure (spec §6).
+    """Classify one message, retrying once on a failure (spec §6).
 
-    Returns the score dict, or ``None`` if both attempts fail to parse.
+    Returns the score dict, or ``None`` if both attempts fail to parse. An empty
+    or whitespace-only message carries no behavioral signal, so it is scored as
+    all-zeros without spending an API call (parity with the keyword classifier).
+
+    Provider exceptions (e.g. a hard API failure after the backend's own
+    retries) are caught and treated as a failed attempt, so one bad message
+    cannot crash the whole run — it is recorded as a classification failure and
+    counts against ``DEFAULT_MAX_FAILURE_RATE``.
     """
+    if not message_text or not message_text.strip():
+        return {cat: 0.0 for cat in CATEGORIES}
+
     prompt = build_judge_prompt(message_text)
     for _ in range(2):  # initial attempt + one retry
-        gen = provider.generate(
-            [{"role": "user", "content": prompt}],
-            seed=None,
-            temperature=0.0,  # deterministic judging
-            max_tokens=max_tokens,
-            system=_JUDGE_SYSTEM,
-        )
+        try:
+            gen = provider.generate(
+                [{"role": "user", "content": prompt}],
+                seed=None,
+                temperature=0.0,  # deterministic judging
+                max_tokens=max_tokens,
+                system=_JUDGE_SYSTEM,
+            )
+        except Exception as exc:  # noqa: BLE001 — any provider error is a failed attempt
+            logger.warning("Judge provider call failed: %s", exc)
+            continue
         scores = parse_judge_response(gen.text)
         if scores is not None:
             return scores
