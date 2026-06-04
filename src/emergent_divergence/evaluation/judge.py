@@ -69,7 +69,9 @@ _JUDGE_SYSTEM = (
     "then output a single JSON object containing only the integer scores."
 )
 
-_THINKING_RE = re.compile(r"<thinking>(.*?)</thinking>", re.DOTALL)
+# Tolerates a missing closing tag: if the judge is truncated at max_tokens
+# mid-reasoning, still capture the partial CoT (valuable for auditing).
+_THINKING_RE = re.compile(r"<thinking>(.*?)(?:</thinking>|$)", re.DOTALL)
 
 
 def build_judge_prompt(
@@ -126,6 +128,11 @@ def parse_judge_scores(
         valid = True
         for name in rubric.dimensions:
             if name not in raw:
+                valid = False
+                break
+            # bool is an int subclass; reject it so a stray ``true``/``false``
+            # is treated as malformed rather than silently coerced to 1/0.
+            if isinstance(raw[name], bool):
                 valid = False
                 break
             try:

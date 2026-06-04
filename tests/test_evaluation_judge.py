@@ -80,6 +80,13 @@ def test_parse_returns_none_on_incomplete_schema():
     assert judge.parse_judge_scores("no json here") is None
 
 
+def test_parse_rejects_booleans():
+    # bool is an int subclass; a stray `true` must not be coerced to a score.
+    raw = ('{"role_consistency": true, "distinctiveness": 3, '
+           '"contribution_quality": 3, "coherence": 3, "engagement": 3}')
+    assert judge.parse_judge_scores(raw) is None
+
+
 # ── evaluate_agent ────────────────────────────────────────────────────────────
 
 def test_evaluate_agent_success_captures_scores_and_thinking():
@@ -106,6 +113,15 @@ def test_evaluate_agent_parse_error_keeps_raw_and_thinking():
     assert result["status"] == "parse_error"
     assert result["thinking"] == "hmm"
     assert "raw_response" in result
+
+
+def test_evaluate_agent_captures_unclosed_thinking_on_cutoff():
+    # Model truncated mid-reasoning: no </thinking>, no JSON. We still capture
+    # the partial reasoning for auditing.
+    provider = FakeProvider(reply="<thinking>hmm cut off")
+    result = judge.evaluate_agent("agent_0", ["hi"], provider)
+    assert result["status"] == "parse_error"
+    assert result["thinking"] == "hmm cut off"
 
 
 def test_evaluate_agent_provider_exception_is_reported_not_raised():
