@@ -127,6 +127,17 @@ def test_parse_skips_leading_non_object_brace():
     assert scores["critique"] == 0.1
 
 
+def test_parse_skips_leading_offschema_object():
+    # A valid JSON object that doesn't match the schema must not mask a later
+    # schema-compliant score object.
+    raw = ('{"status": "ok", "note": "scores follow"} '
+           '{"proposal": 0.4, "critique": 0.4, "synthesis": 0.4, '
+           '"verification": 0.4, "recall": 0.4, "clarification": 0.4}')
+    scores = llm_judge.parse_judge_response(raw)
+    assert scores is not None
+    assert scores["proposal"] == 0.4
+
+
 # ── Retry behavior ────────────────────────────────────────────────────────────
 
 def test_classify_message_retries_once_then_succeeds():
@@ -205,6 +216,14 @@ def test_event_field_preserves_falsy_round_id_and_turn(tmp_path):
     rec = result["classifications"]["agent_0"][0]
     assert rec["round_id"] == 0
     assert rec["turn"] == 0
+
+
+def test_event_field_handles_null_data():
+    # A "data" field explicitly set to null must not raise AttributeError.
+    assert llm_judge._event_field({"data": None}, "round_id") is None
+    assert llm_judge._event_field({"round_id": 5, "data": None}, "round_id") == 5
+    assert llm_judge._event_field({"data": {"turn": 2}}, "turn") == 2
+    assert llm_judge._get_text({"data": None}) == ""
 
 
 # ── Run-level classification ──────────────────────────────────────────────────

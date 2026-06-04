@@ -31,6 +31,7 @@ from __future__ import annotations
 import json
 import logging
 from collections import defaultdict
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -104,49 +105,56 @@ def build_judge_prompt(message_text: str) -> str:
 
 # ── Response parsing ──────────────────────────────────────────────────────────
 
-def _extract_json_object(text: str) -> dict | None:
-    """Recover the first valid top-level JSON object embedded in ``text``.
+def _extract_json_objects(text: str) -> Iterator[dict]:
+    """Yield each valid top-level JSON object embedded in ``text``, in order.
 
-    Scans from each ``{`` and uses ``raw_decode`` so trailing prose, markdown
-    fences, or extra brace blocks after the object don't defeat parsing (a
-    greedy ``{.*}`` match would over-capture to the last ``}`` and fail).
+    Scans from each ``{`` with ``raw_decode`` so trailing prose, markdown
+    fences, or extra brace blocks don't defeat parsing (a greedy ``{.*}`` match
+    would over-capture to the last ``}`` and fail). Yielding every object —
+    rather than returning the first — lets the caller skip a leading valid-but-
+    off-schema block (e.g. a status header) and still find the score object.
     """
     decoder = json.JSONDecoder()
     start = text.find("{")
     while start != -1:
         try:
-            obj, _ = decoder.raw_decode(text, start)
+            obj, end = decoder.raw_decode(text, start)
         except (json.JSONDecodeError, ValueError):
             start = text.find("{", start + 1)
             continue
         if isinstance(obj, dict):
-            return obj
-        start = text.find("{", start + 1)
-    return None
+            yield obj
+        start = text.find("{", max(end, start + 1))
 
 
 def parse_judge_response(text: str) -> dict[str, float] | None:
     """Parse a judge reply into a clamped 6-category score dict.
 
-    Tolerant of stray prose or markdown fences around the JSON object. Returns
-    ``None`` when no valid object with the full category set can be recovered.
+    Tolerant of stray prose or markdown fences. Scans each embedded JSON object
+    and returns the first that satisfies the full category schema, so a leading
+    valid-but-off-schema block does not mask a later valid score object. Returns
+    ``None`` when no such object can be recovered.
     """
     if not text:
         return None
-    raw = _extract_json_object(text)
-    if raw is None:
-        return None
 
-    scores: dict[str, float] = {}
-    for cat in CATEGORIES:
-        if cat not in raw:
-            return None  # Incomplete schema — treat as a parse failure.
-        try:
-            val = float(raw[cat])
-        except (TypeError, ValueError):
-            return None
-        scores[cat] = max(0.0, min(1.0, val))
-    return scores
+    for raw in _extract_json_objects(text):
+        scores: dict[str, float] = {}
+        valid = True
+        for cat in CATEGORIES:
+            if cat not in raw:
+                valid = False
+                break
+            try:
+                val = float(raw[cat])
+            except (TypeError, ValueError):
+                valid = False
+                break
+            scores[cat] = max(0.0, min(1.0, val))
+        if valid:
+            return scores
+
+    return None
 
 
 # ── Single-message classification ─────────────────────────────────────────────
@@ -193,7 +201,8 @@ def classify_message(
 # ── Run-level classification ──────────────────────────────────────────────────
 
 def _get_text(event: dict) -> str:
-    return event.get("data", {}).get("response_text", "")
+    data = event.get("data")
+    return data.get("response_text", "") if isinstance(data, dict) else ""
 
 
 def _event_field(event: dict, key: str) -> Any:
@@ -201,12 +210,14 @@ def _event_field(event: dict, key: str) -> Any:
 
     Uses an explicit ``is not None`` check rather than ``or`` so falsy-but-valid
     values (notably ``round_id``/``turn`` of ``0``) are preserved instead of
-    falling through to the other location.
+    falling through to the other location. Guards against a ``data`` field that
+    is explicitly ``null`` (which would otherwise raise ``AttributeError``).
     """
     top = event.get(key)
     if top is not None:
         return top
-    return event.get("data", {}).get(key)
+    data = event.get("data")
+    return data.get(key) if isinstance(data, dict) else None
 
 
 def classify_run(

@@ -53,11 +53,12 @@ def cmd_analyze(args: argparse.Namespace) -> None:
         print(f"Log file not found: {log_path}")
         sys.exit(1)
 
-    from emergent_divergence.metrics.llm_judge import DEFAULT_JUDGE_MODEL
-
     print(f"Analyzing: {log_path}")
     classifier = getattr(args, "classifier", "keyword")
-    judge_model = getattr(args, "judge_model", DEFAULT_JUDGE_MODEL)
+    # Default left as None here; the judge module resolves it to its own
+    # DEFAULT_JUDGE_MODEL. The CLI's --judge-model default (set in main) is the
+    # single inline import site, so the constant isn't duplicated.
+    judge_model = getattr(args, "judge_model", None)
     if classifier != "keyword":
         print(f"  Behavioral classifier: {classifier} (judge model: {judge_model})")
     report = generate_analysis_report(
