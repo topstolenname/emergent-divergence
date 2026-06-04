@@ -313,3 +313,45 @@ def test_report_rejects_unknown_classifier(tmp_path):
     log_path = _write_log(tmp_path, {"agent_0": ["hello world"]})
     with pytest.raises(ValueError, match="Unknown classifier"):
         generate_analysis_report(log_path, classifier="bogus")
+
+
+# ── Integration: classify_run over mixed judge replies ────────────────────────
+
+def test_classify_run_mixed_quality_replies(tmp_path):
+    """End-to-end run where the judge returns a realistic mix of replies:
+    clean JSON, garbage-then-retry, an off-schema leading block, and one
+    message that fails both attempts (tolerated under a relaxed cap)."""
+    good = ('{"proposal": 0.6, "critique": 0.2, "synthesis": 0.1, '
+            '"verification": 0.1, "recall": 0.0, "clarification": 0.0}')
+    fenced = ("```json\n"
+              '{"proposal": 0.1, "critique": 0.7, "synthesis": 0.1, '
+              '"verification": 0.1, "recall": 0.0, "clarification": 0.0}\n```')
+    offschema_then_good = (
+        '{"status": "ok"} then the scores: '
+        '{"proposal": 0.0, "critique": 0.0, "synthesis": 0.9, '
+        '"verification": 0.1, "recall": 0.0, "clarification": 0.0}')
+
+    log_path = _write_log(tmp_path, {"agent_0": ["m1", "m2", "m3", "m4"]})
+    # Call order: m1(1) -> m2(2, retry) -> m3(1) -> m4(2, both fail).
+    provider = FakeJudgeProvider(replies=[
+        good,                  # m1: clean
+        "garbage", fenced,     # m2: bad, then retry succeeds (markdown fence)
+        offschema_then_good,   # m3: leading off-schema object, then real scores
+        "nope", "still nope",  # m4: both attempts fail
+    ])
+
+    # 4 messages, cap 0.5 -> tolerates up to 2 failures, so the single failure
+    # does not abort the run.
+    result = llm_judge.classify_run(log_path, provider, max_failure_rate=0.5)
+
+    assert "error" not in result
+    assert result["total_classifications"] == 4
+    assert result["classification_failures"] == 1
+    # Three successful classifications contribute to the profile.
+    prof = result["profiles"]["agent_0"]
+    assert set(prof) == set(llm_judge.CATEGORIES)
+    # m3's synthesis-heavy scores were recovered despite the leading block.
+    assert prof["synthesis"] > 0
+    # The failed message is recorded with null scores in the classifications.
+    null_scores = [m for m in result["classifications"]["agent_0"] if m["scores"] is None]
+    assert len(null_scores) == 1

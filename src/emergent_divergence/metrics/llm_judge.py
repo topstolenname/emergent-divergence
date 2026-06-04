@@ -17,6 +17,13 @@ Design contract (kept deliberately narrow so it cannot perturb experiments):
 * **Backend reuse.** It calls the existing synchronous ``ModelProvider``
   abstraction (the Claude arm by default), so authentication, retry, and cost
   accounting are the ones already used by the agents. No async, no new SDK.
+* **Resilient parsing.** Judge replies are parsed by scanning every embedded
+  JSON object (via ``json.JSONDecoder.raw_decode``, not a greedy regex) and
+  taking the first that satisfies the full category schema. This tolerates
+  surrounding prose, markdown fences, trailing text, and a leading
+  valid-but-off-schema block. Unparseable replies are retried once, then counted
+  as a classification failure under ``DEFAULT_MAX_FAILURE_RATE``; the run aborts
+  early once that cap becomes unreachable.
 
 Note on the *rejected* alternative: a separately proposed variant injected the
 agent's assigned role into the prompt and scored a ``role_rigidity`` dimension
@@ -124,6 +131,9 @@ def _extract_json_objects(text: str) -> Iterator[dict]:
             continue
         if isinstance(obj, dict):
             yield obj
+        # Resume scanning after the object we just decoded (``end``); the
+        # ``start + 1`` floor guarantees forward progress if ``end`` somehow
+        # didn't advance past the current ``{``.
         start = text.find("{", max(end, start + 1))
 
 
