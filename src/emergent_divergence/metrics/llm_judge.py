@@ -17,6 +17,13 @@ Design contract (kept deliberately narrow so it cannot perturb experiments):
 * **Backend reuse.** It calls the existing synchronous ``ModelProvider``
   abstraction (the Claude arm by default), so authentication, retry, and cost
   accounting are the ones already used by the agents. No async, no new SDK.
+* **Resilient parsing.** Judge replies are parsed by scanning every embedded
+  JSON object (via ``json.JSONDecoder.raw_decode``, not a greedy regex) and
+  taking the first that satisfies the full category schema. This tolerates
+  surrounding prose, markdown fences, trailing text, and a leading
+  valid-but-off-schema block. Unparseable replies are retried once, then counted
+  as a classification failure under ``DEFAULT_MAX_FAILURE_RATE``; the run aborts
+  early once that cap becomes unreachable.
 
 Note on the *rejected* alternative: a separately proposed variant injected the
 agent's assigned role into the prompt and scored a ``role_rigidity`` dimension
@@ -30,8 +37,8 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from collections import defaultdict
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -105,37 +112,59 @@ def build_judge_prompt(message_text: str) -> str:
 
 # ── Response parsing ──────────────────────────────────────────────────────────
 
-_JSON_OBJ_RE = re.compile(r"\{.*\}", re.S)
+def _extract_json_objects(text: str) -> Iterator[dict]:
+    """Yield each valid top-level JSON object embedded in ``text``, in order.
+
+    Scans from each ``{`` with ``raw_decode`` so trailing prose, markdown
+    fences, or extra brace blocks don't defeat parsing (a greedy ``{.*}`` match
+    would over-capture to the last ``}`` and fail). Yielding every object —
+    rather than returning the first — lets the caller skip a leading valid-but-
+    off-schema block (e.g. a status header) and still find the score object.
+    """
+    decoder = json.JSONDecoder()
+    start = text.find("{")
+    while start != -1:
+        try:
+            obj, end = decoder.raw_decode(text, start)
+        except (json.JSONDecodeError, ValueError):
+            start = text.find("{", start + 1)
+            continue
+        if isinstance(obj, dict):
+            yield obj
+        # Resume scanning after the object we just decoded (``end``); the
+        # ``start + 1`` floor guarantees forward progress if ``end`` somehow
+        # didn't advance past the current ``{``.
+        start = text.find("{", max(end, start + 1))
 
 
 def parse_judge_response(text: str) -> dict[str, float] | None:
     """Parse a judge reply into a clamped 6-category score dict.
 
-    Tolerant of stray prose or markdown fences around the JSON object. Returns
-    ``None`` when no valid object with the full category set can be recovered.
+    Tolerant of stray prose or markdown fences. Scans each embedded JSON object
+    and returns the first that satisfies the full category schema, so a leading
+    valid-but-off-schema block does not mask a later valid score object. Returns
+    ``None`` when no such object can be recovered.
     """
     if not text:
         return None
-    match = _JSON_OBJ_RE.search(text)
-    if not match:
-        return None
-    try:
-        raw = json.loads(match.group(0))
-    except (json.JSONDecodeError, ValueError):
-        return None
-    if not isinstance(raw, dict):
-        return None
 
-    scores: dict[str, float] = {}
-    for cat in CATEGORIES:
-        if cat not in raw:
-            return None  # Incomplete schema — treat as a parse failure.
-        try:
-            val = float(raw[cat])
-        except (TypeError, ValueError):
-            return None
-        scores[cat] = max(0.0, min(1.0, val))
-    return scores
+    for raw in _extract_json_objects(text):
+        scores: dict[str, float] = {}
+        valid = True
+        for cat in CATEGORIES:
+            if cat not in raw:
+                valid = False
+                break
+            try:
+                val = float(raw[cat])
+            except (TypeError, ValueError):
+                valid = False
+                break
+            scores[cat] = max(0.0, min(1.0, val))
+        if valid:
+            return scores
+
+    return None
 
 
 # ── Single-message classification ─────────────────────────────────────────────
@@ -182,7 +211,23 @@ def classify_message(
 # ── Run-level classification ──────────────────────────────────────────────────
 
 def _get_text(event: dict) -> str:
-    return event.get("data", {}).get("response_text", "")
+    data = event.get("data")
+    return data.get("response_text", "") if isinstance(data, dict) else ""
+
+
+def _event_field(event: dict, key: str) -> Any:
+    """Read ``key`` from the event top level or its ``data`` block.
+
+    Uses an explicit ``is not None`` check rather than ``or`` so falsy-but-valid
+    values (notably ``round_id``/``turn`` of ``0``) are preserved instead of
+    falling through to the other location. Guards against a ``data`` field that
+    is explicitly ``null`` (which would otherwise raise ``AttributeError``).
+    """
+    top = event.get(key)
+    if top is not None:
+        return top
+    data = event.get("data")
+    return data.get(key) if isinstance(data, dict) else None
 
 
 def classify_run(
@@ -213,19 +258,26 @@ def classify_run(
 
     model_name = judge_model or getattr(provider, "model", None) or DEFAULT_JUDGE_MODEL
 
+    # Total message count is known upfront, so we can stop the moment the failure
+    # cap becomes unrecoverable instead of judging every message first — this
+    # avoids burning hundreds of provider calls on a misconfigured backend.
+    total_messages = sum(len(msgs) for msgs in agent_messages.values())
+    max_failures = max_failure_rate * total_messages
+
     classifications: dict[str, list[dict]] = defaultdict(list)
     per_message: list[dict] = []
     failures = 0
     total = 0
+    aborted = False
 
     # Deterministic, sequential pass over messages (spec §6: no parallelism).
     for aid in sorted(agent_messages.keys()):
         for event in agent_messages[aid]:
             total += 1
             text = _get_text(event)
-            round_id = event.get("round_id") or event.get("data", {}).get("round_id")
-            turn = event.get("data", {}).get("turn")
-            task_id = event.get("task_id") or event.get("data", {}).get("task_id")
+            round_id = _event_field(event, "round_id")
+            turn = _event_field(event, "turn")
+            task_id = _event_field(event, "task_id")
 
             scores = classify_message(provider, text)
             if scores is None:
@@ -236,6 +288,11 @@ def classify_run(
                     "task_id": task_id,
                     "scores": None,
                 })
+                # Once failures exceed the cap, later successes cannot bring the
+                # final rate back under it — bail out early.
+                if failures > max_failures:
+                    aborted = True
+                    break
                 continue
 
             classifications[aid].append({
@@ -251,12 +308,15 @@ def classify_run(
                 "text": text,
                 "scores": scores,
             })
+        if aborted:
+            break
 
-    if total and failures / total > max_failure_rate:
+    if aborted or (total and failures / total > max_failure_rate):
         return {
             "error": (
                 f"Judge failure rate {failures}/{total} "
                 f"({failures / total:.1%}) exceeds cap of {max_failure_rate:.0%}"
+                + (" — aborted early" if aborted else "")
             ),
             "judge_model": model_name,
             "total_classifications": total,

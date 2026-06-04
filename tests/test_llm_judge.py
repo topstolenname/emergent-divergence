@@ -107,6 +107,37 @@ def test_parse_rejects_incomplete_schema():
     assert llm_judge.parse_judge_response("not json at all") is None
 
 
+def test_parse_handles_trailing_brace_block():
+    # A greedy {.*} would capture through the second brace block and fail to
+    # parse; raw_decode stops at the first complete object.
+    raw = ('{"proposal": 0.3, "critique": 0.3, "synthesis": 0.3, '
+           '"verification": 0.3, "recall": 0.3, "clarification": 0.3}\n'
+           "Note: scores are independent {see rubric}.")
+    scores = llm_judge.parse_judge_response(raw)
+    assert scores is not None
+    assert scores["proposal"] == 0.3
+
+
+def test_parse_skips_leading_non_object_brace():
+    # First "{...}" is not a dict of scores; parser should find the real one.
+    raw = '{not valid} then {"proposal": 0.1, "critique": 0.1, "synthesis": 0.1, ' \
+          '"verification": 0.1, "recall": 0.1, "clarification": 0.1}'
+    scores = llm_judge.parse_judge_response(raw)
+    assert scores is not None
+    assert scores["critique"] == 0.1
+
+
+def test_parse_skips_leading_offschema_object():
+    # A valid JSON object that doesn't match the schema must not mask a later
+    # schema-compliant score object.
+    raw = ('{"status": "ok", "note": "scores follow"} '
+           '{"proposal": 0.4, "critique": 0.4, "synthesis": 0.4, '
+           '"verification": 0.4, "recall": 0.4, "clarification": 0.4}')
+    scores = llm_judge.parse_judge_response(raw)
+    assert scores is not None
+    assert scores["proposal"] == 0.4
+
+
 # ── Retry behavior ────────────────────────────────────────────────────────────
 
 def test_classify_message_retries_once_then_succeeds():
@@ -151,10 +182,48 @@ def test_classify_message_provider_exception_is_failure_not_crash():
 
 def test_classify_run_survives_provider_exceptions(tmp_path):
     log_path = _write_log(tmp_path, {"agent_0": ["a", "b"]})
-    # All calls raise -> all messages fail -> failure cap aborts cleanly (no crash).
+    # All calls raise -> failures hit the cap and the run bails out cleanly
+    # (no crash) on the first failure rather than judging everything.
     result = llm_judge.classify_run(log_path, _RaisingProvider(), max_failure_rate=0.1)
     assert "error" in result
+    assert result["classification_failures"] == 1
+
+
+def test_classify_run_aborts_early_on_unrecoverable_failures(tmp_path):
+    # 10 messages, 10% cap -> max 1 failure tolerated. With every call failing,
+    # the run must bail out before judging all 10 (each costs 2 attempts).
+    log_path = _write_log(tmp_path, {"agent_0": [f"m{i}" for i in range(10)]})
+    provider = _RaisingProvider()
+    result = llm_judge.classify_run(log_path, provider, max_failure_rate=0.1)
+    assert "error" in result
+    assert "aborted early" in result["error"]
+    # Stopped after the 2nd failure (cap=1.0), not after all 10 messages.
     assert result["classification_failures"] == 2
+    assert provider.calls == 4  # 2 messages x 2 attempts
+
+
+def test_event_field_preserves_falsy_round_id_and_turn(tmp_path):
+    # round_id=0 / turn=0 are valid first-round values and must survive.
+    log_path = tmp_path / "events.jsonl"
+    event = {
+        "event_type": "agent_message", "round_id": 0, "task_id": "task_0",
+        "agent_id": "agent_0",
+        "data": {"agent_id": "agent_0", "turn": 0, "response_text": "hello"},
+    }
+    log_path.write_text(json.dumps(event) + "\n", encoding="utf-8")
+    provider = FakeJudgeProvider(scores={c: 0.5 for c in llm_judge.CATEGORIES})
+    result = llm_judge.classify_run(log_path, provider)
+    rec = result["classifications"]["agent_0"][0]
+    assert rec["round_id"] == 0
+    assert rec["turn"] == 0
+
+
+def test_event_field_handles_null_data():
+    # A "data" field explicitly set to null must not raise AttributeError.
+    assert llm_judge._event_field({"data": None}, "round_id") is None
+    assert llm_judge._event_field({"round_id": 5, "data": None}, "round_id") == 5
+    assert llm_judge._event_field({"data": {"turn": 2}}, "turn") == 2
+    assert llm_judge._get_text({"data": None}) == ""
 
 
 # ── Run-level classification ──────────────────────────────────────────────────
@@ -183,7 +252,8 @@ def test_classify_run_aborts_above_failure_cap(tmp_path):
     provider = FakeJudgeProvider(replies=["bad"] * 20)  # every message fails
     result = llm_judge.classify_run(log_path, provider, max_failure_rate=0.1)
     assert "error" in result
-    assert result["classification_failures"] == 5
+    # 5 messages, cap 0.1 -> tolerates <1 failure, so it bails on the first.
+    assert result["classification_failures"] == 1
 
 
 # ── Agreement ─────────────────────────────────────────────────────────────────
@@ -236,3 +306,52 @@ def test_report_default_keyword_has_no_judge(tmp_path):
     report = generate_analysis_report(log_path)
     assert "behavioral_specialization_llm_judge" not in report
     assert "classifier_agreement" not in report
+
+
+def test_report_rejects_unknown_classifier(tmp_path):
+    import pytest
+    log_path = _write_log(tmp_path, {"agent_0": ["hello world"]})
+    with pytest.raises(ValueError, match="Unknown classifier"):
+        generate_analysis_report(log_path, classifier="bogus")
+
+
+# ── Integration: classify_run over mixed judge replies ────────────────────────
+
+def test_classify_run_mixed_quality_replies(tmp_path):
+    """End-to-end run where the judge returns a realistic mix of replies:
+    clean JSON, garbage-then-retry, an off-schema leading block, and one
+    message that fails both attempts (tolerated under a relaxed cap)."""
+    good = ('{"proposal": 0.6, "critique": 0.2, "synthesis": 0.1, '
+            '"verification": 0.1, "recall": 0.0, "clarification": 0.0}')
+    fenced = ("```json\n"
+              '{"proposal": 0.1, "critique": 0.7, "synthesis": 0.1, '
+              '"verification": 0.1, "recall": 0.0, "clarification": 0.0}\n```')
+    offschema_then_good = (
+        '{"status": "ok"} then the scores: '
+        '{"proposal": 0.0, "critique": 0.0, "synthesis": 0.9, '
+        '"verification": 0.1, "recall": 0.0, "clarification": 0.0}')
+
+    log_path = _write_log(tmp_path, {"agent_0": ["m1", "m2", "m3", "m4"]})
+    # Call order: m1(1) -> m2(2, retry) -> m3(1) -> m4(2, both fail).
+    provider = FakeJudgeProvider(replies=[
+        good,                  # m1: clean
+        "garbage", fenced,     # m2: bad, then retry succeeds (markdown fence)
+        offschema_then_good,   # m3: leading off-schema object, then real scores
+        "nope", "still nope",  # m4: both attempts fail
+    ])
+
+    # 4 messages, cap 0.5 -> tolerates up to 2 failures, so the single failure
+    # does not abort the run.
+    result = llm_judge.classify_run(log_path, provider, max_failure_rate=0.5)
+
+    assert "error" not in result
+    assert result["total_classifications"] == 4
+    assert result["classification_failures"] == 1
+    # Three successful classifications contribute to the profile.
+    prof = result["profiles"]["agent_0"]
+    assert set(prof) == set(llm_judge.CATEGORIES)
+    # m3's synthesis-heavy scores were recovered despite the leading block.
+    assert prof["synthesis"] > 0
+    # The failed message is recorded with null scores in the classifications.
+    null_scores = [m for m in result["classifications"]["agent_0"] if m["scores"] is None]
+    assert len(null_scores) == 1
