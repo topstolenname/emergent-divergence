@@ -56,6 +56,10 @@ This vault rigorously documents a completed experimental run: **3 agents, 50 rou
 - [[Future Work]] — Broader aspirations beyond the immediate roadmap
 - [[Glossary]] — Key terms used throughout this vault
 
+### Research Journal
+
+- [[00 — Journal Index]] — Dated lab notebook of decisions, runs, and rationale; the primary-source material for the eventual white paper
+
 ---
 
 ## Quick Stats
