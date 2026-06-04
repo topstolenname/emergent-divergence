@@ -70,8 +70,8 @@ def test_overrides_take_precedence():
 
 
 def test_auto_reduce_shrinks_to_fit_cap():
-    # A $1 cap against the full claude matrix can't fit; the driver must shrink it.
-    cfg = load_pipeline_config(None, overrides={"cap_usd": 1.0})
+    # A $2 cap against the full claude matrix can't fit; the driver must shrink it.
+    cfg = load_pipeline_config(None, overrides={"cap_usd": 2.0})
     governor = CostGovernor(cap_usd=cfg.cap_usd, prices=cfg.prices)
     seeds_before, rounds_before = len(cfg.seeds), cfg.rounds
 
@@ -147,3 +147,67 @@ def test_run_pipeline_smoke_end_to_end(tmp_path):
     assert manifest["integrity"]["ok"] is True
     # Three stub cells (A/B/C), all should complete offline.
     assert manifest["integrity"]["done"] == 3
+
+    # Provenance fingerprint is present (git SHA key, platform, per-backend model).
+    prov = manifest["provenance"]
+    assert "git" in prov and "sha" in prov["git"]
+    assert prov["python"] and prov["platform"]
+    assert prov["models"]["stub"]["model"] == "stub-v1"
+
+
+# ── embedder integrity gate ───────────────────────────────────────────────────
+
+
+def _force_fallback_embedder(monkeypatch):
+    """Point the pipeline's embedder lookup at a real lexical-fallback Embedder."""
+    import emergent_divergence.embeddings as emb_mod
+    from emergent_divergence.embeddings.embedder import Embedder
+
+    monkeypatch.setattr(emb_mod, "get_embedder", lambda *a, **k: Embedder(prefer="none"))
+
+
+def _gate_yaml(tmp_path):
+    cfg_yaml = tmp_path / "pipeline.yaml"
+    cfg_yaml.write_text(
+        f"output_root: {tmp_path / 'raw'}\nreport_root: {tmp_path / 'reports'}\n"
+    )
+    return str(cfg_yaml)
+
+
+def test_run_pipeline_aborts_on_hashing_fallback(tmp_path, monkeypatch):
+    # A real (non-smoke) run must refuse to spend on lexical-only "semantic" metrics.
+    _force_fallback_embedder(monkeypatch)
+    monkeypatch.delenv("ALLOW_HASHING_EMBEDDER", raising=False)
+
+    code = run_pipeline(
+        config_path=_gate_yaml(tmp_path),
+        overrides={"backends": ["stub"], "conditions": ["A"], "seeds": [42], "rounds": 1},
+        skip_tests=True, no_report=True, verbose=False,
+    )
+    assert code == 4
+
+
+def test_hashing_fallback_allowed_via_env(tmp_path, monkeypatch):
+    # Explicit opt-in proceeds (lexical-only results, operator's choice).
+    _force_fallback_embedder(monkeypatch)
+    monkeypatch.setenv("ALLOW_HASHING_EMBEDDER", "1")
+
+    code = run_pipeline(
+        config_path=_gate_yaml(tmp_path),
+        overrides={"backends": ["stub"], "conditions": ["A"], "seeds": [42], "rounds": 1},
+        skip_tests=True, no_report=True, verbose=False,
+    )
+    assert code == 0
+
+
+def test_smoke_bypasses_fallback_gate(tmp_path, monkeypatch):
+    # Smoke is offline-by-design; the fallback is expected and must not abort it.
+    _force_fallback_embedder(monkeypatch)
+    monkeypatch.delenv("ALLOW_HASHING_EMBEDDER", raising=False)
+
+    code = run_pipeline(
+        config_path=_gate_yaml(tmp_path),
+        overrides={"smoke": True},
+        skip_tests=True, no_report=True, verbose=False,
+    )
+    assert code == 0

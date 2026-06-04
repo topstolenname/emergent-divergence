@@ -46,6 +46,10 @@ CONDITIONS: dict[str, dict[str, Any]] = {
 
 _ABLATION_MARKER = "[no input]"
 _CONTINUE_PROMPT = "Continue the discussion. Respond to what was said."
+# Disjoint seed stream for the same-prompt null probe so its common-random-number
+# samples never collide with the influence-probe seeds (which span
+# ``seed + 7919*round_id + k``). A large prime keeps the two streams independent.
+_NULL_SEED_OFFSET = 104729
 
 
 @dataclass
@@ -65,9 +69,17 @@ class CellConfig:
     influence_every_n: int = 5
     k_samples: int = 1          # MC samples for token-JSD (Claude uses 3).
     ablation: str = "neutral"   # "neutral" (replace with [no input]) | "drop".
+    # Same-prompt resampling null: resample each agent on the *identical* task
+    # prompt to log the intra-agent (pure-sampling) divergence floor that genuine
+    # between-agent divergence must exceed.
+    null_baseline: bool = True
 
     def cell_id(self) -> str:
         return f"{self.backend}_{self.condition}_seed{self.seed}"
+
+    def null_k(self) -> int:
+        """Samples for the null probe; >= 2 so an intra-agent spread is estimable."""
+        return max(2, self.k_samples)
 
 
 @dataclass
@@ -152,6 +164,8 @@ class CellRunner:
                 influence_every_n=self.config.influence_every_n,
                 k_samples=self.config.k_samples,
                 ablation=self.config.ablation,
+                null_baseline=self.config.null_baseline,
+                null_k=self.config.null_k(),
                 provider=self.provider.name,
                 model=self.provider.model,
             )
@@ -173,6 +187,7 @@ class CellRunner:
 
                 if self._is_measured_round(round_id):
                     self._run_influence_probe(logger, round_id, task)
+                    self._run_null_baseline_probe(logger, round_id, task)
 
                 self._write_status("running", round_id + 1)
                 self._log_v(
@@ -282,6 +297,42 @@ class CellRunner:
                     samples=ablated,
                 )
 
+    def _run_null_baseline_probe(
+        self, logger: ExperimentLogger, round_id: int, task
+    ) -> None:
+        """Same-prompt resampling null: the intra-agent variation floor.
+
+        Each agent answers the *identical* bare task prompt ``null_k`` times. The
+        spread among those samples is pure decoding stochasticity (temperature)
+        given the agent's fixed disposition — the floor that genuine *between-agent*
+        divergence must exceed to be more than sampling noise. The seed stream is
+        offset from the influence probe so the two estimates are independent
+        (common random numbers *within* the null, not shared *across* probes).
+
+        Logging only: the metrics layer turns ``null_baseline_samples`` into an
+        intra-agent JSD/cosine floor it can compare against the between-agent
+        divergence series.
+        """
+        if not self.config.null_baseline:
+            return
+        k = self.config.null_k()
+        ctx: list[Message] = [{"role": "user", "content": task.instructions}]
+        seed_base = self.config.seed + _NULL_SEED_OFFSET
+        logger.log(
+            "null_baseline_start",
+            round_id=round_id, task_id=task.task_id,
+            k_samples=k, agents=[a.agent_id for a in self.agents],
+        )
+        for agent in self.agents:
+            samples = self._samples(
+                agent, round_id, ctx, k=k, seed_base=seed_base
+            )
+            logger.log(
+                "null_baseline_samples",
+                round_id=round_id, task_id=task.task_id,
+                agent_id=agent.agent_id, samples=samples,
+            )
+
     def rerun_target_with_ablation(
         self,
         target: str,
@@ -386,6 +437,8 @@ class CellRunner:
         if self._is_measured_round(round_id):
             n = self.config.num_agents
             calls += n + (n * self.config.k_samples) + (n * (n - 1) * self.config.k_samples)
+            if self.config.null_baseline:
+                calls += n * self.config.null_k()
         est_in = self._estimate_input_tokens()
         est_out = self.config.max_tokens
         est = calls * self.governor.cost_of(self.config.backend, est_in, est_out)

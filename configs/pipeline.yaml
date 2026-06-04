@@ -25,6 +25,11 @@ k_samples:                     # MC samples per probe; Claude gets more for toke
   stub: 1
 ablation: neutral              # "neutral" (replace source with [no input]) | "drop"
 
+# Same-prompt resampling null. On each measured round, resample every agent on the
+# *identical* task prompt to log the intra-agent (pure-sampling) divergence floor
+# that genuine between-agent divergence must exceed. Adds n×max(2,k) calls/probe.
+null_baseline: true
+
 # Robustness.
 retries: 2
 retry_backoff_s: 2.0
@@ -47,6 +52,9 @@ backends_cfg:
     model: llama3.2:3b
     host: http://localhost:11434
   claude:
+    # For a reproducible paid arm, pin a DATED snapshot (…-YYYYMMDD) rather than a
+    # rolling alias — the provider may silently re-point an alias between runs.
+    # RUN_MANIFEST.json records this string and flags it when it is not dated.
     model: claude-sonnet-4-6
   stub:
     model: stub-v1

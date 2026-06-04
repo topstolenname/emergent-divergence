@@ -124,6 +124,43 @@ def test_resume_from_partial_completes(tmp_path):
     assert counts["round_end"] == 2
 
 
+# ── same-prompt resampling null probe ─────────────────────────────────────────
+
+
+def test_null_baseline_probe_logged(tmp_path):
+    cfg = _cfg("A")  # influence_every_n=1 -> every round is measured
+    run_dir = tmp_path / cfg.cell_id()
+    CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
+
+    counts = _event_counts(run_dir)
+    # One null-baseline probe per measured round; one samples event per agent.
+    assert counts["null_baseline_start"] == 2          # 2 rounds
+    assert counts["null_baseline_samples"] == 6        # 2 rounds × 3 agents
+
+    events = load_events(run_dir / "events.jsonl")
+    samp = [e for e in events if e["event_type"] == "null_baseline_samples"]
+    # The floor needs a spread, so each agent is resampled >= 2 times.
+    assert samp and all(len(e["data"]["samples"]) >= 2 for e in samp)
+    # Config records the null knobs for the metrics/report layer.
+    cfgev = next(e for e in events if e["event_type"] == "experiment_config")
+    assert cfgev["data"]["null_baseline"] is True
+    assert cfgev["data"]["null_k"] >= 2
+
+
+def test_null_baseline_can_be_disabled(tmp_path):
+    cfg = _cfg("A")
+    cfg.null_baseline = False
+    run_dir = tmp_path / cfg.cell_id()
+    CellRunner(cfg, StubProvider(), run_dir, verbose=False).run()
+
+    counts = _event_counts(run_dir)
+    assert counts["null_baseline_start"] == 0
+    assert counts["null_baseline_samples"] == 0
+    # Deliberation and the influence probe are unaffected.
+    assert counts["agent_message"] == 12
+    assert counts["influence_probe_start"] == 2
+
+
 # ── named ablation hook (brief §4.3) ──────────────────────────────────────────
 
 

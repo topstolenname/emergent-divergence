@@ -53,6 +53,16 @@ class Embedder:
 
     # ── public API ───────────────────────────────────────────────────────────
 
+    @property
+    def is_fallback(self) -> bool:
+        """True when the semantic backend degraded to the lexical hashing path.
+
+        Semantic divergence/influence numbers are only *semantic* on ``minilm``;
+        on the fallback they reduce to lexical overlap. The pipeline gates real
+        runs on this so a degraded embedder can't masquerade as semantic results.
+        """
+        return self.backend != "minilm"
+
     def embed(self, texts: list[str]) -> np.ndarray:
         """Return an ``(N, EMBED_DIM)`` float32 array of L2-normalised vectors."""
         if not texts:
@@ -68,11 +78,12 @@ class Embedder:
         """Embed a single string -> ``(EMBED_DIM,)`` vector."""
         return self.embed([text])[0]
 
-    def info(self) -> dict[str, str | int]:
+    def info(self) -> dict[str, str | int | bool]:
         return {
             "backend": self.backend,
             "model_name": self.model_name,
             "dim": EMBED_DIM,
+            "is_fallback": self.is_fallback,
         }
 
     # ── deterministic fallback ─────────────────────────────────────────────────

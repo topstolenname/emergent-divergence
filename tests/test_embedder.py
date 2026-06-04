@@ -48,6 +48,22 @@ def test_info_fields():
     assert info["backend"] in ("minilm", "hashing-fallback")
     assert info["dim"] == EMBED_DIM
     assert "model_name" in info
+    assert "is_fallback" in info
+
+
+def test_is_fallback_matches_backend():
+    emb = Embedder()
+    assert emb.is_fallback == (emb.backend != "minilm")
+    assert emb.info()["is_fallback"] == emb.is_fallback
+
+
+def test_prefer_other_than_minilm_forces_fallback():
+    # Only ``prefer="minilm"`` attempts the real model; anything else stays lexical
+    # — a deterministic way to exercise the fallback regardless of the environment.
+    emb = Embedder(prefer="none")
+    assert emb.backend == "hashing-fallback"
+    assert emb.is_fallback is True
+    assert emb.info()["is_fallback"] is True
 
 
 def test_get_embedder_is_singleton():
