@@ -155,6 +155,35 @@ def test_run_pipeline_smoke_end_to_end(tmp_path):
     assert prov["models"]["stub"]["model"] == "stub-v1"
 
 
+# ── ollama provenance tag matching ────────────────────────────────────────────
+
+
+def test_select_ollama_entry_exact_tag_match():
+    from emergent_divergence.pipeline import _select_ollama_entry
+
+    models = [
+        {"name": "llama3.2:1b", "digest": "aaa"},
+        {"name": "llama3.2:3b", "digest": "bbb"},
+    ]
+    # Must pick the requested tag's digest, not the first same-repo entry.
+    assert _select_ollama_entry(models, "llama3.2:3b")["digest"] == "bbb"
+
+
+def test_select_ollama_entry_latest_normalisation():
+    from emergent_divergence.pipeline import _select_ollama_entry
+
+    models = [{"name": "llama3.2:latest", "digest": "ccc"}]
+    assert _select_ollama_entry(models, "llama3.2")["digest"] == "ccc"
+
+
+def test_select_ollama_entry_no_false_base_match():
+    from emergent_divergence.pipeline import _select_ollama_entry
+
+    # 3b not installed -> must NOT fall back to the 1b tag of the same repo.
+    models = [{"name": "llama3.2:1b", "digest": "aaa"}]
+    assert _select_ollama_entry(models, "llama3.2:3b") is None
+
+
 # ── embedder integrity gate ───────────────────────────────────────────────────
 
 

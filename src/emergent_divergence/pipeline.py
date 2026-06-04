@@ -553,6 +553,25 @@ def _git_provenance() -> dict[str, Any]:
     }
 
 
+def _normalize_ollama_tag(name: str) -> str:
+    """Ollama implies ``:latest`` when a tag is omitted; normalise for exact match."""
+    return name if ":" in name else f"{name}:latest"
+
+
+def _select_ollama_entry(models: list[dict], model: str) -> dict | None:
+    """Exact match on the normalised ``repo:tag``.
+
+    Matching on the bare repo would let a *different* tag of the same repo
+    (e.g. ``llama3.2:1b`` vs the requested ``llama3.2:3b``) supply the wrong
+    digest when several are installed — so we require the full tag to agree.
+    """
+    want = _normalize_ollama_tag(model)
+    for m in models:
+        if _normalize_ollama_tag(str(m.get("name", ""))) == want:
+            return m
+    return None
+
+
 def _ollama_provenance(bcfg: dict) -> dict[str, Any]:
     """Resolve the Ollama model's content digest via ``/api/tags`` (best-effort)."""
     import urllib.request
@@ -563,13 +582,11 @@ def _ollama_provenance(bcfg: dict) -> dict[str, Any]:
     try:
         with urllib.request.urlopen(host + "/api/tags", timeout=5) as resp:  # noqa: S310
             data = json.loads(resp.read().decode("utf-8"))
-        for m in data.get("models", []):
-            name = m.get("name", "")
-            if name == model or name.split(":")[0] == model.split(":")[0]:
-                info["digest"] = m.get("digest")
-                info["modified_at"] = m.get("modified_at")
-                info["size"] = m.get("size")
-                break
+        entry = _select_ollama_entry(data.get("models", []), model)
+        if entry is not None:
+            info["digest"] = entry.get("digest")
+            info["modified_at"] = entry.get("modified_at")
+            info["size"] = entry.get("size")
     except Exception as e:  # noqa: BLE001 — provenance is best-effort, never fatal
         info["error"] = str(e)
     return info
