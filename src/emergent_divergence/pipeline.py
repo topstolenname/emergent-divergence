@@ -21,6 +21,7 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -49,6 +50,7 @@ _DEFAULTS: dict[str, Any] = {
     "influence_every_n": 5,
     "k_samples": {"ollama": 1, "claude": 3, "stub": 1},
     "ablation": "neutral",
+    "null_baseline": True,
     "retries": 2,
     "retry_backoff_s": 2.0,
     "output_root": "data/raw_logs",
@@ -80,6 +82,7 @@ class PipelineConfig:
     influence_every_n: int
     k_samples: dict[str, int]
     ablation: str
+    null_baseline: bool
     cap_usd: float
     retries: int
     retry_backoff_s: float
@@ -114,6 +117,7 @@ class PipelineConfig:
             "influence_every_n": self.influence_every_n,
             "k_samples": self.k_samples,
             "ablation": self.ablation,
+            "null_baseline": self.null_baseline,
             "cap_usd": self.cap_usd,
             "smoke": self.smoke,
             "output_root": str(self.output_root),
@@ -183,6 +187,7 @@ def load_pipeline_config(
         influence_every_n=int(data["influence_every_n"]),
         k_samples=_coerce_k_samples(data.get("k_samples")),
         ablation=str(data["ablation"]),
+        null_baseline=bool(data.get("null_baseline", True)),
         cap_usd=float(data["cost"]["cap_usd"]),
         retries=int(data["retries"]),
         retry_backoff_s=float(data["retry_backoff_s"]),
@@ -259,6 +264,7 @@ def _make_cell(cfg: PipelineConfig, backend: str, condition: str, seed: int) -> 
         influence_every_n=cfg.influence_every_n,
         k_samples=cfg.k_for(backend),
         ablation=cfg.ablation,
+        null_baseline=cfg.null_baseline,
     )
 
 
@@ -316,6 +322,11 @@ def _check_ollama(host: str) -> dict[str, Any]:
         return {"available": False, "reason": f"unreachable at {host}: {e}"}
 
 
+def _allow_hashing_fallback() -> bool:
+    """Operator opt-in (``ALLOW_HASHING_EMBEDDER``) to run on the lexical fallback."""
+    return os.getenv("ALLOW_HASHING_EMBEDDER", "").strip().lower() in ("1", "true", "yes")
+
+
 # ── stage 1: test gate ──────────────────────────────────────────────────────────
 
 
@@ -363,6 +374,8 @@ def estimate_cost(cfg: PipelineConfig, governor: CostGovernor) -> dict[str, Any]
     for backend in cfg.backends:
         k = cfg.k_for(backend)
         probe_calls = measured * (n + n * k + n * (n - 1) * k)
+        if cfg.null_baseline:
+            probe_calls += measured * (n * max(2, k))  # same-prompt null probe
         calls_per_cell = deliberation + probe_calls
         n_cells = len(cfg.conditions) * len(cfg.seeds)
         unit = governor.cost_of(backend, _EST_INPUT_TOKENS, cfg.max_tokens)
@@ -510,6 +523,136 @@ def _unavailable_result(
     )
 
 
+# ── provenance (reproducibility fingerprint) ─────────────────────────────────────
+
+# A dated snapshot ends in ``-YYYYMMDD``; anything else (e.g. ``claude-sonnet-4-6``)
+# is a rolling alias that may be re-pointed by the provider over time.
+_DATED_SNAPSHOT_RE = re.compile(r"-\d{8}$")
+
+
+def _run_git(args: list[str]) -> str | None:
+    try:
+        out = subprocess.run(
+            ["git", *args], cwd=str(Path.cwd()),
+            capture_output=True, text=True, timeout=10,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return out.stdout.strip() if out.returncode == 0 else None
+
+
+def _git_provenance() -> dict[str, Any]:
+    """Best-effort git fingerprint: commit SHA, branch, and working-tree dirtiness."""
+    sha = _run_git(["rev-parse", "HEAD"])
+    branch = _run_git(["rev-parse", "--abbrev-ref", "HEAD"])
+    porcelain = _run_git(["status", "--porcelain"])
+    return {
+        "sha": sha,
+        "branch": branch,
+        "dirty": (bool(porcelain) if porcelain is not None else None),
+    }
+
+
+def _normalize_ollama_tag(name: str) -> str:
+    """Ollama implies ``:latest`` when a tag is omitted; normalise for exact match."""
+    return name if ":" in name else f"{name}:latest"
+
+
+def _select_ollama_entry(models: list[dict], model: str) -> dict | None:
+    """Exact match on the normalised ``repo:tag``.
+
+    Matching on the bare repo would let a *different* tag of the same repo
+    (e.g. ``llama3.2:1b`` vs the requested ``llama3.2:3b``) supply the wrong
+    digest when several are installed — so we require the full tag to agree.
+    """
+    want = _normalize_ollama_tag(model)
+    for m in models:
+        if _normalize_ollama_tag(str(m.get("name", ""))) == want:
+            return m
+    return None
+
+
+def _ollama_provenance(bcfg: dict) -> dict[str, Any]:
+    """Resolve the Ollama model's content digest via ``/api/tags`` (best-effort)."""
+    import urllib.request
+
+    host = str(bcfg.get("host", "http://localhost:11434")).rstrip("/")
+    model = str(bcfg.get("model", "llama3.2:3b"))
+    info: dict[str, Any] = {"model": model, "host": host, "digest": None}
+    try:
+        with urllib.request.urlopen(host + "/api/tags", timeout=5) as resp:  # noqa: S310
+            data = json.loads(resp.read().decode("utf-8"))
+        entry = _select_ollama_entry(data.get("models", []), model)
+        if entry is not None:
+            info["digest"] = entry.get("digest")
+            info["modified_at"] = entry.get("modified_at")
+            info["size"] = entry.get("size")
+    except Exception as e:  # noqa: BLE001 — provenance is best-effort, never fatal
+        info["error"] = str(e)
+    return info
+
+
+def _claude_provenance(bcfg: dict) -> dict[str, Any]:
+    """Record the configured Claude model and whether it is a pinned dated snapshot."""
+    model = str(bcfg.get("model", "claude-sonnet-4-6"))
+    is_dated = bool(_DATED_SNAPSHOT_RE.search(model))
+    return {
+        "model": model,
+        "is_dated_snapshot": is_dated,
+        "pin_warning": None if is_dated else (
+            f"{model!r} is a rolling alias, not a dated snapshot; the paid arm "
+            "may not reproduce if the provider re-points it. Pin a dated "
+            "snapshot (…-YYYYMMDD) for a fully reproducible run."
+        ),
+    }
+
+
+def _package_version() -> str | None:
+    try:
+        from importlib.metadata import PackageNotFoundError, version
+
+        try:
+            return version("emergent-divergence")
+        except PackageNotFoundError:
+            pass
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        import emergent_divergence
+
+        return getattr(emergent_divergence, "__version__", None)
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def collect_provenance(cfg: PipelineConfig) -> dict[str, Any]:
+    """Reproducibility fingerprint: code version, platform, and per-backend model
+    identity (git SHA, Ollama content digest, pinned/aliased Claude snapshot).
+
+    Network/git calls are best-effort and never raise — missing data is recorded
+    as ``None`` rather than aborting artifact writing.
+    """
+    import platform as _platform
+
+    bcfg = cfg.backends_cfg
+    prov: dict[str, Any] = {
+        "git": _git_provenance(),
+        "python": sys.version.split()[0],
+        "platform": _platform.platform(),
+        "package_version": _package_version(),
+        "models": {},
+    }
+    if "ollama" in cfg.backends:
+        prov["models"]["ollama"] = _ollama_provenance(bcfg.get("ollama", {}))
+    if "claude" in cfg.backends:
+        prov["models"]["claude"] = _claude_provenance(bcfg.get("claude", {}))
+    if "stub" in cfg.backends:
+        prov["models"]["stub"] = {
+            "model": str(bcfg.get("stub", {}).get("model", "stub-v1"))
+        }
+    return prov
+
+
 # ── stage 4: metrics + statistics ────────────────────────────────────────────────
 
 
@@ -606,6 +749,7 @@ def write_artifacts(
     manifest = {
         "run_id": cfg.run_id,
         "generated_utc": datetime.now(timezone.utc).isoformat(),
+        "provenance": collect_provenance(cfg),
         "config": cfg.to_serializable(),
         "preflight": preflight_info,
         "test_gate": test_gate,
@@ -741,6 +885,23 @@ def run_pipeline(
     if not any(st["available"] for st in pf["backends"].values()):
         print("  No backend available; nothing to run. Aborting.", flush=True)
         return 2
+
+    # Embedder integrity gate — semantic divergence/influence are only *semantic*
+    # on MiniLM; on the lexical hashing fallback they silently reduce to word
+    # overlap. Abort real runs before any spend unless the operator explicitly
+    # accepts lexical-only results.
+    emb = pf.get("embedder", {})
+    emb_backend = emb.get("backend")
+    if emb_backend != "minilm" and not cfg.smoke and not _allow_hashing_fallback():
+        print(
+            f"  Embedder backend is {emb_backend!r}, not 'minilm' — semantic "
+            "metrics would be lexical, not semantic. Aborting before any spend.\n"
+            "  Fix: install sentence-transformers and cache the all-MiniLM-L6-v2 "
+            "weights. To proceed anyway with explicitly lexical-only results, set "
+            "ALLOW_HASHING_EMBEDDER=1.",
+            flush=True,
+        )
+        return 4
 
     # Stage 1 — test gate (before any paid spend)
     banner("Stage 1: test gate")
