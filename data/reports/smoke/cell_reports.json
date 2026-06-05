@@ -1,0 +1,821 @@
+{
+  "stub_A_seed42": {
+    "config": {
+      "backend": "stub",
+      "condition": "A",
+      "seed": 42,
+      "roles": [
+        "proposer",
+        "critic",
+        "synthesizer"
+      ],
+      "memory_enabled": true,
+      "num_agents": 3,
+      "num_rounds": 2,
+      "turns_per_round": 2,
+      "temperature": 1.0,
+      "max_tokens": 400,
+      "influence_every_n": 1,
+      "k_samples": 1,
+      "ablation": "neutral",
+      "null_baseline": true,
+      "null_k": 2,
+      "provider": "stub",
+      "model": "stub-v1"
+    },
+    "linguistic": {
+      "linguistic_divergence": {
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.300125,
+          "agent_0_vs_agent_2": 0.287226,
+          "agent_1_vs_agent_2": 0.296776
+        },
+        "mean_jsd": 0.294709,
+        "jsd_over_time": [],
+        "lexical_uniqueness": {
+          "agent_0": 0.0619,
+          "agent_1": 0.0957,
+          "agent_2": 0.2077
+        },
+        "temporal_correlation": {
+          "error": "Insufficient data points for correlation (need >= 5 windows)"
+        }
+      },
+      "behavioral_specialization": {
+        "profiles": {
+          "agent_0": {
+            "proposal": 0.0,
+            "critique": 0.0,
+            "synthesis": 0.05,
+            "verification": 0.1,
+            "recall": 0.0625,
+            "clarification": 0.0
+          },
+          "agent_1": {
+            "proposal": 0.0,
+            "critique": 0.0227,
+            "synthesis": 0.075,
+            "verification": 0.025,
+            "recall": 0.0938,
+            "clarification": 0.0
+          },
+          "agent_2": {
+            "proposal": 0.025,
+            "critique": 0.0454,
+            "synthesis": 0.075,
+            "verification": 0.125,
+            "recall": 0.0938,
+            "clarification": 0.0
+          }
+        },
+        "divergence_score": 0.087889
+      },
+      "memory_usage": {
+        "agent_0": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_1": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_2": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        }
+      },
+      "coordination_structure": {
+        "message_counts": {
+          "agent_0": 4,
+          "agent_1": 4,
+          "agent_2": 4
+        },
+        "first_speaker_counts": {
+          "agent_0": 1
+        },
+        "total_rounds": 1
+      },
+      "agent_count": 3,
+      "total_messages": 12
+    },
+    "h1_temporal_correlation": {
+      "error": "Insufficient data points for correlation (need >= 5 windows)"
+    },
+    "semantic": {
+      "available": true,
+      "mean_cosine": 0.099572,
+      "spearman_rho": null,
+      "spearman_p": null,
+      "early_mean": 0.098522,
+      "late_mean": 0.100622,
+      "trend": 0.0021,
+      "n_rounds": 2
+    },
+    "influence": {
+      "available": true,
+      "agents": [
+        "agent_0",
+        "agent_1",
+        "agent_2"
+      ],
+      "measured_rounds": [
+        0,
+        1
+      ],
+      "embedder": {
+        "backend": "hashing-fallback",
+        "model_name": "hashing-fallback-384",
+        "dim": 384,
+        "is_fallback": true
+      },
+      "semantic": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.153934,
+            0.185051
+          ],
+          [
+            0.019703,
+            0.0,
+            0.020211
+          ],
+          [
+            0.044952,
+            0.039876,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.338985,
+          "agent_1": 0.039913,
+          "agent_2": 0.084829
+        },
+        "col_sums": {
+          "agent_0": 0.064655,
+          "agent_1": 0.193811,
+          "agent_2": 0.205261
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.338985,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.134232,
+            0.140099
+          ],
+          [
+            -0.134232,
+            0.0,
+            -0.019666
+          ],
+          [
+            -0.140099,
+            0.019666,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.27433,
+          "agent_1": -0.153898,
+          "agent_2": -0.120433
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.429954,
+        "mean_offdiagonal": 0.077288,
+        "max_offdiagonal": 0.185051
+      },
+      "token": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.146212,
+            0.161861
+          ],
+          [
+            0.011364,
+            0.0,
+            0.010964
+          ],
+          [
+            0.023717,
+            0.021283,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.308074,
+          "agent_1": 0.022328,
+          "agent_2": 0.045
+        },
+        "col_sums": {
+          "agent_0": 0.035081,
+          "agent_1": 0.167495,
+          "agent_2": 0.172826
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.308074,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.134849,
+            0.138144
+          ],
+          [
+            -0.134849,
+            0.0,
+            -0.010319
+          ],
+          [
+            -0.138144,
+            0.010319,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.272993,
+          "agent_1": -0.145167,
+          "agent_2": -0.127825
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.507449,
+        "mean_offdiagonal": 0.062567,
+        "max_offdiagonal": 0.161861
+      },
+      "per_round_influence": {
+        "0": 0.06373361746470134,
+        "1": 0.09084212779998779
+      },
+      "mean_influence_sem": 0.077288,
+      "gini_sem": 0.429954,
+      "hub": "agent_0",
+      "hub_net_positive": true
+    },
+    "lagged_influence_divergence": {
+      "error": "insufficient overlapping (influence, divergence) points",
+      "by_lag": []
+    }
+  },
+  "stub_B_seed42": {
+    "config": {
+      "backend": "stub",
+      "condition": "B",
+      "seed": 42,
+      "roles": [
+        "proposer",
+        "critic",
+        "synthesizer"
+      ],
+      "memory_enabled": false,
+      "num_agents": 3,
+      "num_rounds": 2,
+      "turns_per_round": 2,
+      "temperature": 1.0,
+      "max_tokens": 400,
+      "influence_every_n": 1,
+      "k_samples": 1,
+      "ablation": "neutral",
+      "null_baseline": true,
+      "null_k": 2,
+      "provider": "stub",
+      "model": "stub-v1"
+    },
+    "linguistic": {
+      "linguistic_divergence": {
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.272373,
+          "agent_0_vs_agent_2": 0.269948,
+          "agent_1_vs_agent_2": 0.247743
+        },
+        "mean_jsd": 0.263355,
+        "jsd_over_time": [],
+        "lexical_uniqueness": {
+          "agent_0": 0.0645,
+          "agent_1": 0.1203,
+          "agent_2": 0.1024
+        },
+        "temporal_correlation": {
+          "error": "Insufficient data points for correlation (need >= 5 windows)"
+        }
+      },
+      "behavioral_specialization": {
+        "profiles": {
+          "agent_0": {
+            "proposal": 0.025,
+            "critique": 0.0454,
+            "synthesis": 0.075,
+            "verification": 0.075,
+            "recall": 0.0625,
+            "clarification": 0.0
+          },
+          "agent_1": {
+            "proposal": 0.0,
+            "critique": 0.0,
+            "synthesis": 0.075,
+            "verification": 0.075,
+            "recall": 0.0938,
+            "clarification": 0.0
+          },
+          "agent_2": {
+            "proposal": 0.025,
+            "critique": 0.0,
+            "synthesis": 0.1,
+            "verification": 0.05,
+            "recall": 0.0938,
+            "clarification": 0.0
+          }
+        },
+        "divergence_score": 0.056451
+      },
+      "memory_usage": {
+        "agent_0": {
+          "total_writes": 0,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_1": {
+          "total_writes": 0,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_2": {
+          "total_writes": 0,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        }
+      },
+      "coordination_structure": {
+        "message_counts": {
+          "agent_0": 4,
+          "agent_1": 4,
+          "agent_2": 4
+        },
+        "first_speaker_counts": {
+          "agent_0": 1
+        },
+        "total_rounds": 1
+      },
+      "agent_count": 3,
+      "total_messages": 12
+    },
+    "h1_temporal_correlation": {
+      "error": "Insufficient data points for correlation (need >= 5 windows)"
+    },
+    "semantic": {
+      "available": true,
+      "mean_cosine": 0.081154,
+      "spearman_rho": null,
+      "spearman_p": null,
+      "early_mean": 0.053299,
+      "late_mean": 0.10901,
+      "trend": 0.05571,
+      "n_rounds": 2
+    },
+    "influence": {
+      "available": true,
+      "agents": [
+        "agent_0",
+        "agent_1",
+        "agent_2"
+      ],
+      "measured_rounds": [
+        0,
+        1
+      ],
+      "embedder": {
+        "backend": "hashing-fallback",
+        "model_name": "hashing-fallback-384",
+        "dim": 384,
+        "is_fallback": true
+      },
+      "semantic": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.194663,
+            0.222029
+          ],
+          [
+            0.018483,
+            0.0,
+            0.01926
+          ],
+          [
+            0.046681,
+            0.045069,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.416692,
+          "agent_1": 0.037743,
+          "agent_2": 0.09175
+        },
+        "col_sums": {
+          "agent_0": 0.065164,
+          "agent_1": 0.239733,
+          "agent_2": 0.241289
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.416692,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.176181,
+            0.175348
+          ],
+          [
+            -0.176181,
+            0.0,
+            -0.025809
+          ],
+          [
+            -0.175348,
+            0.025809,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.351528,
+          "agent_1": -0.20199,
+          "agent_2": -0.149539
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.462541,
+        "mean_offdiagonal": 0.091031,
+        "max_offdiagonal": 0.222029
+      },
+      "token": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.157493,
+            0.177304
+          ],
+          [
+            0.011483,
+            0.0,
+            0.011245
+          ],
+          [
+            0.028354,
+            0.025577,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.334797,
+          "agent_1": 0.022728,
+          "agent_2": 0.053931
+        },
+        "col_sums": {
+          "agent_0": 0.039837,
+          "agent_1": 0.183071,
+          "agent_2": 0.188549
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.334797,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.14601,
+            0.14895
+          ],
+          [
+            -0.14601,
+            0.0,
+            -0.014332
+          ],
+          [
+            -0.14895,
+            0.014332,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.294961,
+          "agent_1": -0.160342,
+          "agent_2": -0.134618
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.505632,
+        "mean_offdiagonal": 0.068576,
+        "max_offdiagonal": 0.177304
+      },
+      "per_round_influence": {
+        "0": 0.09455558657646179,
+        "1": 0.0875062346458435
+      },
+      "mean_influence_sem": 0.091031,
+      "gini_sem": 0.462541,
+      "hub": "agent_0",
+      "hub_net_positive": true
+    },
+    "lagged_influence_divergence": {
+      "error": "insufficient overlapping (influence, divergence) points",
+      "by_lag": []
+    }
+  },
+  "stub_C_seed42": {
+    "config": {
+      "backend": "stub",
+      "condition": "C",
+      "seed": 42,
+      "roles": [
+        "generic",
+        "generic",
+        "generic"
+      ],
+      "memory_enabled": true,
+      "num_agents": 3,
+      "num_rounds": 2,
+      "turns_per_round": 2,
+      "temperature": 1.0,
+      "max_tokens": 400,
+      "influence_every_n": 1,
+      "k_samples": 1,
+      "ablation": "neutral",
+      "null_baseline": true,
+      "null_k": 2,
+      "provider": "stub",
+      "model": "stub-v1"
+    },
+    "linguistic": {
+      "linguistic_divergence": {
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.243188,
+          "agent_0_vs_agent_2": 0.309616,
+          "agent_1_vs_agent_2": 0.252818
+        },
+        "mean_jsd": 0.268541,
+        "jsd_over_time": [],
+        "lexical_uniqueness": {
+          "agent_0": 0.1613,
+          "agent_1": 0.124,
+          "agent_2": 0.2185
+        },
+        "temporal_correlation": {
+          "error": "Insufficient data points for correlation (need >= 5 windows)"
+        }
+      },
+      "behavioral_specialization": {
+        "profiles": {
+          "agent_0": {
+            "proposal": 0.0,
+            "critique": 0.0227,
+            "synthesis": 0.05,
+            "verification": 0.05,
+            "recall": 0.0625,
+            "clarification": 0.0
+          },
+          "agent_1": {
+            "proposal": 0.0,
+            "critique": 0.0227,
+            "synthesis": 0.1,
+            "verification": 0.075,
+            "recall": 0.0938,
+            "clarification": 0.0
+          },
+          "agent_2": {
+            "proposal": 0.0,
+            "critique": 0.0454,
+            "synthesis": 0.075,
+            "verification": 0.05,
+            "recall": 0.0938,
+            "clarification": 0.0
+          }
+        },
+        "divergence_score": 0.050709
+      },
+      "memory_usage": {
+        "agent_0": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_1": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_2": {
+          "total_writes": 4,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        }
+      },
+      "coordination_structure": {
+        "message_counts": {
+          "agent_0": 4,
+          "agent_1": 4,
+          "agent_2": 4
+        },
+        "first_speaker_counts": {
+          "agent_0": 1
+        },
+        "total_rounds": 1
+      },
+      "agent_count": 3,
+      "total_messages": 12
+    },
+    "h1_temporal_correlation": {
+      "error": "Insufficient data points for correlation (need >= 5 windows)"
+    },
+    "semantic": {
+      "available": true,
+      "mean_cosine": 0.076589,
+      "spearman_rho": null,
+      "spearman_p": null,
+      "early_mean": 0.0543,
+      "late_mean": 0.098879,
+      "trend": 0.044579,
+      "n_rounds": 2
+    },
+    "influence": {
+      "available": true,
+      "agents": [
+        "agent_0",
+        "agent_1",
+        "agent_2"
+      ],
+      "measured_rounds": [
+        0,
+        1
+      ],
+      "embedder": {
+        "backend": "hashing-fallback",
+        "model_name": "hashing-fallback-384",
+        "dim": 384,
+        "is_fallback": true
+      },
+      "semantic": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.217563,
+            0.218095
+          ],
+          [
+            0.021255,
+            0.0,
+            0.023118
+          ],
+          [
+            0.041387,
+            0.044696,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.435658,
+          "agent_1": 0.044373,
+          "agent_2": 0.086083
+        },
+        "col_sums": {
+          "agent_0": 0.062642,
+          "agent_1": 0.262259,
+          "agent_2": 0.241213
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.435658,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.196308,
+            0.176708
+          ],
+          [
+            -0.196308,
+            0.0,
+            -0.021578
+          ],
+          [
+            -0.176708,
+            0.021578,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.373015,
+          "agent_1": -0.217885,
+          "agent_2": -0.15513
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.460784,
+        "mean_offdiagonal": 0.094352,
+        "max_offdiagonal": 0.218095
+      },
+      "token": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.161561,
+            0.168271
+          ],
+          [
+            0.011766,
+            0.0,
+            0.012236
+          ],
+          [
+            0.026071,
+            0.026655,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.329832,
+          "agent_1": 0.024003,
+          "agent_2": 0.052726
+        },
+        "col_sums": {
+          "agent_0": 0.037837,
+          "agent_1": 0.188217,
+          "agent_2": 0.180507
+        },
+        "hub": "agent_0",
+        "hub_row_sum": 0.329832,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.149795,
+            0.1422
+          ],
+          [
+            -0.149795,
+            0.0,
+            -0.014419
+          ],
+          [
+            -0.1422,
+            0.014419,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": 0.291995,
+          "agent_1": -0.164214,
+          "agent_2": -0.127781
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.50149,
+        "mean_offdiagonal": 0.06776,
+        "max_offdiagonal": 0.168271
+      },
+      "per_round_influence": {
+        "0": 0.10252305865287781,
+        "1": 0.08618153134981792
+      },
+      "mean_influence_sem": 0.094352,
+      "gini_sem": 0.460784,
+      "hub": "agent_0",
+      "hub_net_positive": true
+    },
+    "lagged_influence_divergence": {
+      "error": "insufficient overlapping (influence, divergence) points",
+      "by_lag": []
+    }
+  }
+}

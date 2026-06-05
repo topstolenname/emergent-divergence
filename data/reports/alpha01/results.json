@@ -1,0 +1,28 @@
+[
+  {
+    "cell_id": "claude_A_seed42",
+    "backend": "claude",
+    "condition": "A",
+    "seed": 42,
+    "provider": "claude",
+    "model": "claude-sonnet-4-6",
+    "rounds": 37,
+    "linguistic_mean_jsd": null,
+    "h1_jsd_rho": null,
+    "behavioral_divergence": null,
+    "semantic_mean": null,
+    "semantic_rho": null,
+    "semantic_trend": null,
+    "influence_available": false,
+    "influence_mean_sem": null,
+    "influence_gini": null,
+    "influence_hub": null,
+    "influence_hub_net_positive": null,
+    "influence_precedes": null,
+    "influence_lag_rho": null,
+    "embedder_backend": "minilm",
+    "status": "failed",
+    "rounds_done": 0,
+    "cost_usd": 0.0
+  }
+]

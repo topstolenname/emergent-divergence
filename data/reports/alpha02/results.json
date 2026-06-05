@@ -1,0 +1,28 @@
+[
+  {
+    "cell_id": "ollama_A_seed42",
+    "backend": "ollama",
+    "condition": "A",
+    "seed": 42,
+    "provider": "ollama",
+    "model": "phi3.5:3.8b",
+    "rounds": 50,
+    "linguistic_mean_jsd": 0.255816,
+    "h1_jsd_rho": -0.1433,
+    "behavioral_divergence": 0.037767,
+    "semantic_mean": 0.302446,
+    "semantic_rho": 0.2596,
+    "semantic_trend": 0.035178,
+    "influence_available": true,
+    "influence_mean_sem": 0.247244,
+    "influence_gini": 0.047755,
+    "influence_hub": "agent_2",
+    "influence_hub_net_positive": true,
+    "influence_precedes": false,
+    "influence_lag_rho": 0.3333,
+    "embedder_backend": "minilm",
+    "status": "done",
+    "rounds_done": 50,
+    "cost_usd": 0.0
+  }
+]

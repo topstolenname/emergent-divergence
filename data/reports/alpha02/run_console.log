@@ -1,0 +1,43 @@
+[run_all] launching pipeline --backends ollama --conditions A --seeds 42 --cap-usd 5 --run-id alpha02 --skip-tests
+
+================================================================
+  PIPELINE  run_id=alpha02  smoke=False
+================================================================
+  backends=['ollama'] conditions=['A'] seeds=[42] rounds=50
+
+================================================================
+  Stage 0: preflight
+================================================================
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/103 [00:00<?, ?it/s]Loading weights: 100%|██████████| 103/103 [00:00<00:00, 12220.34it/s]
+  embedder: minilm
+  OK ollama: reachable at http://localhost:11434
+
+================================================================
+  Stage 1: test gate
+================================================================
+  pytest: PASS (rc=None) 
+
+================================================================
+  Stage 2: cost estimate
+================================================================
+  estimate: $0.0000 (cap $5.00)
+
+================================================================
+  Stage 3: run matrix
+================================================================
+[1/1] ollama_A_seed42: done (50/50 rounds, spend $0.0000/5)
+
+================================================================
+  Stage 4: metrics + statistics
+================================================================
+  analyzed 1 cells; backends=['ollama']
+
+================================================================
+  Stage 5: integrity + report
+================================================================
+
+  Report dir: data/reports/alpha02
+  Summary:    data/reports/alpha02/RESULTS_SUMMARY.md
+  Cells: done=1 capped=0 failed=0 unavailable=0
+  Spend: $0.0000 / $5.00

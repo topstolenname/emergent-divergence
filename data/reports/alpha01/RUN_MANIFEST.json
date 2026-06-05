@@ -1,0 +1,152 @@
+{
+  "run_id": "alpha01",
+  "generated_utc": "2026-06-05T01:58:34.298479+00:00",
+  "provenance": {
+    "git": {
+      "sha": null,
+      "branch": null,
+      "dirty": null
+    },
+    "python": "3.12.12",
+    "platform": "Linux-7.0.0-22-generic-x86_64-with-glibc2.43",
+    "package_version": "0.1.0",
+    "models": {
+      "claude": {
+        "model": "claude-sonnet-4-6",
+        "is_dated_snapshot": false,
+        "pin_warning": "'claude-sonnet-4-6' is a rolling alias, not a dated snapshot; the paid arm may not reproduce if the provider re-points it. Pin a dated snapshot (\u2026-YYYYMMDD) for a fully reproducible run."
+      }
+    }
+  },
+  "config": {
+    "run_id": "alpha01",
+    "backends": [
+      "claude"
+    ],
+    "conditions": [
+      "A"
+    ],
+    "seeds": [
+      42
+    ],
+    "rounds": 37,
+    "turns_per_round": 2,
+    "temperature": 1.0,
+    "max_tokens": 400,
+    "num_agents": 3,
+    "influence_every_n": 5,
+    "k_samples": {
+      "ollama": 1,
+      "claude": 3,
+      "stub": 1
+    },
+    "ablation": "neutral",
+    "null_baseline": true,
+    "cap_usd": 5.0,
+    "smoke": false,
+    "output_root": "data/raw_logs",
+    "report_root": "data/reports",
+    "backends_cfg": {
+      "ollama": {
+        "model": "llama3.2:3b",
+        "host": "http://localhost:11434"
+      },
+      "claude": {
+        "model": "claude-sonnet-4-6"
+      },
+      "stub": {
+        "model": "stub-v1"
+      }
+    }
+  },
+  "preflight": {
+    "backends": {
+      "claude": {
+        "available": true,
+        "reason": "ANTHROPIC_API_KEY present"
+      }
+    },
+    "embedder": {
+      "backend": "minilm",
+      "model_name": "all-MiniLM-L6-v2",
+      "dim": 384,
+      "is_fallback": false
+    },
+    "dirs_ok": true
+  },
+  "test_gate": {
+    "ran": true,
+    "passed": true,
+    "returncode": 0,
+    "summary": "141 passed in 22.96s"
+  },
+  "cost_estimate": {
+    "per_backend": {
+      "claude": {
+        "n_cells": 1,
+        "calls_per_cell": 690,
+        "est_usd": 5.382
+      }
+    },
+    "total_est_usd": 5.382,
+    "cap_usd": 5.0
+  },
+  "reduction": {
+    "reduced": true,
+    "actions": [
+      "reduced rounds to 37"
+    ],
+    "final_estimate": {
+      "per_backend": {
+        "claude": {
+          "n_cells": 1,
+          "calls_per_cell": 534,
+          "est_usd": 4.1652
+        }
+      },
+      "total_est_usd": 4.1652,
+      "cap_usd": 5.0
+    }
+  },
+  "cost_actual": {
+    "cap_usd": 5.0,
+    "spent_usd": 0.0,
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "calls": 0,
+    "prices": {
+      "claude": {
+        "input_per_mtok": 3.0,
+        "output_per_mtok": 15.0
+      },
+      "ollama": {
+        "input_per_mtok": 0.0,
+        "output_per_mtok": 0.0
+      },
+      "stub": {
+        "input_per_mtok": 0.0,
+        "output_per_mtok": 0.0
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "claude_A_seed42",
+      "status": "failed",
+      "rounds_done": 0,
+      "rounds_total": 37,
+      "cost_usd": 0.0,
+      "error": "Claude request failed after 4 attempts: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011CbjHUVhB3mWs7RZD1dNYQ'}"
+    }
+  ],
+  "integrity": {
+    "expected": 1,
+    "attempted": 1,
+    "done": 0,
+    "skipped_due_to_cap": 0,
+    "skipped_unavailable": 0,
+    "failed": 1,
+    "analyzable": 1,
+    "ok": true
+  }
+}

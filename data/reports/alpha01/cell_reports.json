@@ -1,0 +1,43 @@
+{
+  "claude_A_seed42": {
+    "config": {
+      "backend": "claude",
+      "condition": "A",
+      "seed": 42,
+      "roles": [
+        "proposer",
+        "critic",
+        "synthesizer"
+      ],
+      "memory_enabled": true,
+      "num_agents": 3,
+      "num_rounds": 37,
+      "turns_per_round": 2,
+      "temperature": 1.0,
+      "max_tokens": 400,
+      "influence_every_n": 5,
+      "k_samples": 3,
+      "ablation": "neutral",
+      "null_baseline": true,
+      "null_k": 3,
+      "provider": "claude",
+      "model": "claude-sonnet-4-6"
+    },
+    "linguistic": {
+      "error": "No agent messages found in log"
+    },
+    "h1_temporal_correlation": {
+      "error": "Insufficient data points for correlation (need >= 5 windows)"
+    },
+    "semantic": {
+      "available": false
+    },
+    "influence": {
+      "available": false,
+      "error": "no influence probe events"
+    },
+    "lagged_influence_divergence": {
+      "error": "no influence series"
+    }
+  }
+}

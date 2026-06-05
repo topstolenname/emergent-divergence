@@ -1,0 +1,732 @@
+{
+  "ollama_A_seed42": {
+    "config": {
+      "backend": "ollama",
+      "condition": "A",
+      "seed": 42,
+      "roles": [
+        "proposer",
+        "critic",
+        "synthesizer"
+      ],
+      "memory_enabled": true,
+      "num_agents": 3,
+      "num_rounds": 50,
+      "turns_per_round": 2,
+      "temperature": 1.0,
+      "max_tokens": 400,
+      "influence_every_n": 5,
+      "k_samples": 1,
+      "ablation": "neutral",
+      "null_baseline": true,
+      "null_k": 2,
+      "provider": "ollama",
+      "model": "phi3.5:3.8b"
+    },
+    "linguistic": {
+      "linguistic_divergence": {
+        "pairwise_jsd": {
+          "agent_0_vs_agent_1": 0.253626,
+          "agent_0_vs_agent_2": 0.25682,
+          "agent_1_vs_agent_2": 0.257001
+        },
+        "mean_jsd": 0.255816,
+        "jsd_over_time": [
+          {
+            "window_start": 1,
+            "window_end": 10,
+            "mean_jsd": 0.36537,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.369039,
+              "agent_0_vs_agent_2": 0.365726,
+              "agent_1_vs_agent_2": 0.361346
+            }
+          },
+          {
+            "window_start": 2,
+            "window_end": 11,
+            "mean_jsd": 0.361133,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.364816,
+              "agent_0_vs_agent_2": 0.361136,
+              "agent_1_vs_agent_2": 0.357447
+            }
+          },
+          {
+            "window_start": 3,
+            "window_end": 12,
+            "mean_jsd": 0.364552,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.369976,
+              "agent_0_vs_agent_2": 0.367119,
+              "agent_1_vs_agent_2": 0.356562
+            }
+          },
+          {
+            "window_start": 4,
+            "window_end": 13,
+            "mean_jsd": 0.364287,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.368645,
+              "agent_0_vs_agent_2": 0.367542,
+              "agent_1_vs_agent_2": 0.356673
+            }
+          },
+          {
+            "window_start": 5,
+            "window_end": 14,
+            "mean_jsd": 0.368395,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.37081,
+              "agent_0_vs_agent_2": 0.372292,
+              "agent_1_vs_agent_2": 0.362082
+            }
+          },
+          {
+            "window_start": 6,
+            "window_end": 15,
+            "mean_jsd": 0.374584,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.376281,
+              "agent_0_vs_agent_2": 0.378069,
+              "agent_1_vs_agent_2": 0.369401
+            }
+          },
+          {
+            "window_start": 7,
+            "window_end": 16,
+            "mean_jsd": 0.374277,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.374413,
+              "agent_0_vs_agent_2": 0.376283,
+              "agent_1_vs_agent_2": 0.372136
+            }
+          },
+          {
+            "window_start": 8,
+            "window_end": 17,
+            "mean_jsd": 0.371969,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.370795,
+              "agent_0_vs_agent_2": 0.374503,
+              "agent_1_vs_agent_2": 0.37061
+            }
+          },
+          {
+            "window_start": 9,
+            "window_end": 18,
+            "mean_jsd": 0.371016,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.37072,
+              "agent_0_vs_agent_2": 0.373877,
+              "agent_1_vs_agent_2": 0.36845
+            }
+          },
+          {
+            "window_start": 10,
+            "window_end": 19,
+            "mean_jsd": 0.371839,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.367665,
+              "agent_0_vs_agent_2": 0.374649,
+              "agent_1_vs_agent_2": 0.373204
+            }
+          },
+          {
+            "window_start": 11,
+            "window_end": 20,
+            "mean_jsd": 0.372269,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.366752,
+              "agent_0_vs_agent_2": 0.374944,
+              "agent_1_vs_agent_2": 0.37511
+            }
+          },
+          {
+            "window_start": 12,
+            "window_end": 21,
+            "mean_jsd": 0.370847,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.366701,
+              "agent_0_vs_agent_2": 0.373944,
+              "agent_1_vs_agent_2": 0.371897
+            }
+          },
+          {
+            "window_start": 13,
+            "window_end": 22,
+            "mean_jsd": 0.370707,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.365612,
+              "agent_0_vs_agent_2": 0.371451,
+              "agent_1_vs_agent_2": 0.375059
+            }
+          },
+          {
+            "window_start": 14,
+            "window_end": 23,
+            "mean_jsd": 0.369074,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.363992,
+              "agent_0_vs_agent_2": 0.372045,
+              "agent_1_vs_agent_2": 0.371186
+            }
+          },
+          {
+            "window_start": 15,
+            "window_end": 24,
+            "mean_jsd": 0.370567,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.365653,
+              "agent_0_vs_agent_2": 0.374475,
+              "agent_1_vs_agent_2": 0.371573
+            }
+          },
+          {
+            "window_start": 16,
+            "window_end": 25,
+            "mean_jsd": 0.368198,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.362445,
+              "agent_0_vs_agent_2": 0.372668,
+              "agent_1_vs_agent_2": 0.369482
+            }
+          },
+          {
+            "window_start": 17,
+            "window_end": 26,
+            "mean_jsd": 0.368291,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.361767,
+              "agent_0_vs_agent_2": 0.374034,
+              "agent_1_vs_agent_2": 0.369073
+            }
+          },
+          {
+            "window_start": 18,
+            "window_end": 27,
+            "mean_jsd": 0.374394,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.368218,
+              "agent_0_vs_agent_2": 0.381723,
+              "agent_1_vs_agent_2": 0.373241
+            }
+          },
+          {
+            "window_start": 19,
+            "window_end": 28,
+            "mean_jsd": 0.385109,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.380401,
+              "agent_0_vs_agent_2": 0.3924,
+              "agent_1_vs_agent_2": 0.382527
+            }
+          },
+          {
+            "window_start": 20,
+            "window_end": 29,
+            "mean_jsd": 0.382753,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.379524,
+              "agent_0_vs_agent_2": 0.389756,
+              "agent_1_vs_agent_2": 0.378978
+            }
+          },
+          {
+            "window_start": 21,
+            "window_end": 30,
+            "mean_jsd": 0.381957,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.379909,
+              "agent_0_vs_agent_2": 0.386685,
+              "agent_1_vs_agent_2": 0.379276
+            }
+          },
+          {
+            "window_start": 22,
+            "window_end": 31,
+            "mean_jsd": 0.383007,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.37931,
+              "agent_0_vs_agent_2": 0.38427,
+              "agent_1_vs_agent_2": 0.385442
+            }
+          },
+          {
+            "window_start": 23,
+            "window_end": 32,
+            "mean_jsd": 0.382579,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.381448,
+              "agent_0_vs_agent_2": 0.38352,
+              "agent_1_vs_agent_2": 0.382768
+            }
+          },
+          {
+            "window_start": 24,
+            "window_end": 33,
+            "mean_jsd": 0.385998,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.386808,
+              "agent_0_vs_agent_2": 0.386443,
+              "agent_1_vs_agent_2": 0.384743
+            }
+          },
+          {
+            "window_start": 25,
+            "window_end": 34,
+            "mean_jsd": 0.389426,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.388731,
+              "agent_0_vs_agent_2": 0.387853,
+              "agent_1_vs_agent_2": 0.391694
+            }
+          },
+          {
+            "window_start": 26,
+            "window_end": 35,
+            "mean_jsd": 0.389442,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.386878,
+              "agent_0_vs_agent_2": 0.389604,
+              "agent_1_vs_agent_2": 0.391845
+            }
+          },
+          {
+            "window_start": 27,
+            "window_end": 36,
+            "mean_jsd": 0.387536,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.384561,
+              "agent_0_vs_agent_2": 0.3885,
+              "agent_1_vs_agent_2": 0.389546
+            }
+          },
+          {
+            "window_start": 28,
+            "window_end": 37,
+            "mean_jsd": 0.384999,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.383221,
+              "agent_0_vs_agent_2": 0.384106,
+              "agent_1_vs_agent_2": 0.387671
+            }
+          },
+          {
+            "window_start": 29,
+            "window_end": 38,
+            "mean_jsd": 0.370329,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.368612,
+              "agent_0_vs_agent_2": 0.369432,
+              "agent_1_vs_agent_2": 0.372944
+            }
+          },
+          {
+            "window_start": 30,
+            "window_end": 39,
+            "mean_jsd": 0.367687,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.365593,
+              "agent_0_vs_agent_2": 0.364746,
+              "agent_1_vs_agent_2": 0.372723
+            }
+          },
+          {
+            "window_start": 31,
+            "window_end": 40,
+            "mean_jsd": 0.364687,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.364262,
+              "agent_0_vs_agent_2": 0.362088,
+              "agent_1_vs_agent_2": 0.367711
+            }
+          },
+          {
+            "window_start": 32,
+            "window_end": 41,
+            "mean_jsd": 0.365067,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.361024,
+              "agent_0_vs_agent_2": 0.364353,
+              "agent_1_vs_agent_2": 0.369825
+            }
+          },
+          {
+            "window_start": 33,
+            "window_end": 42,
+            "mean_jsd": 0.365103,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.36096,
+              "agent_0_vs_agent_2": 0.366267,
+              "agent_1_vs_agent_2": 0.368082
+            }
+          },
+          {
+            "window_start": 34,
+            "window_end": 43,
+            "mean_jsd": 0.364346,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.36001,
+              "agent_0_vs_agent_2": 0.365285,
+              "agent_1_vs_agent_2": 0.367744
+            }
+          },
+          {
+            "window_start": 35,
+            "window_end": 44,
+            "mean_jsd": 0.358406,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.35426,
+              "agent_0_vs_agent_2": 0.355974,
+              "agent_1_vs_agent_2": 0.364984
+            }
+          },
+          {
+            "window_start": 36,
+            "window_end": 45,
+            "mean_jsd": 0.354718,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.352242,
+              "agent_0_vs_agent_2": 0.352571,
+              "agent_1_vs_agent_2": 0.359342
+            }
+          },
+          {
+            "window_start": 37,
+            "window_end": 46,
+            "mean_jsd": 0.356972,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.355672,
+              "agent_0_vs_agent_2": 0.354004,
+              "agent_1_vs_agent_2": 0.36124
+            }
+          },
+          {
+            "window_start": 38,
+            "window_end": 47,
+            "mean_jsd": 0.362391,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.362782,
+              "agent_0_vs_agent_2": 0.358143,
+              "agent_1_vs_agent_2": 0.366247
+            }
+          },
+          {
+            "window_start": 39,
+            "window_end": 48,
+            "mean_jsd": 0.368252,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.368519,
+              "agent_0_vs_agent_2": 0.364383,
+              "agent_1_vs_agent_2": 0.371854
+            }
+          },
+          {
+            "window_start": 40,
+            "window_end": 49,
+            "mean_jsd": 0.370939,
+            "pairwise_jsd": {
+              "agent_0_vs_agent_1": 0.371639,
+              "agent_0_vs_agent_2": 0.367777,
+              "agent_1_vs_agent_2": 0.373401
+            }
+          }
+        ],
+        "lexical_uniqueness": {
+          "agent_0": 0.2513,
+          "agent_1": 0.2418,
+          "agent_2": 0.252
+        },
+        "temporal_correlation": {
+          "test": "Spearman rank correlation",
+          "rho": -0.1433,
+          "p_value": 0.37757075059388273,
+          "significant_at_05": false,
+          "direction": "no significant trend",
+          "n_data_points": 40,
+          "interpretation": "No significant temporal trend (\u03c1=-0.143, p=0.3776)"
+        }
+      },
+      "behavioral_specialization": {
+        "profiles": {
+          "agent_0": {
+            "proposal": 0.22,
+            "critique": 0.2,
+            "synthesis": 0.066,
+            "verification": 0.177,
+            "recall": 0.0537,
+            "clarification": 0.0186
+          },
+          "agent_1": {
+            "proposal": 0.206,
+            "critique": 0.2173,
+            "synthesis": 0.047,
+            "verification": 0.195,
+            "recall": 0.0563,
+            "clarification": 0.0314
+          },
+          "agent_2": {
+            "proposal": 0.215,
+            "critique": 0.2091,
+            "synthesis": 0.051,
+            "verification": 0.153,
+            "recall": 0.0525,
+            "clarification": 0.0171
+          }
+        },
+        "divergence_score": 0.037767
+      },
+      "memory_usage": {
+        "agent_0": {
+          "total_writes": 100,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_1": {
+          "total_writes": 100,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        },
+        "agent_2": {
+          "total_writes": 100,
+          "total_reads": 0,
+          "mean_reads_per_msg": 0.0,
+          "max_reads": 0
+        }
+      },
+      "coordination_structure": {
+        "message_counts": {
+          "agent_0": 100,
+          "agent_1": 100,
+          "agent_2": 100
+        },
+        "first_speaker_counts": {
+          "agent_0": 49
+        },
+        "total_rounds": 49
+      },
+      "agent_count": 3,
+      "total_messages": 300
+    },
+    "h1_temporal_correlation": {
+      "test": "Spearman rank correlation",
+      "rho": -0.1433,
+      "p_value": 0.37757075059388273,
+      "significant_at_05": false,
+      "direction": "no significant trend",
+      "n_data_points": 40,
+      "interpretation": "No significant temporal trend (\u03c1=-0.143, p=0.3776)"
+    },
+    "semantic": {
+      "available": true,
+      "mean_cosine": 0.302446,
+      "spearman_rho": 0.2596,
+      "spearman_p": 0.06862782344783239,
+      "early_mean": 0.28267,
+      "late_mean": 0.317849,
+      "trend": 0.035178,
+      "n_rounds": 50
+    },
+    "influence": {
+      "available": true,
+      "agents": [
+        "agent_0",
+        "agent_1",
+        "agent_2"
+      ],
+      "measured_rounds": [
+        0,
+        5,
+        10,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45
+      ],
+      "embedder": {
+        "backend": "minilm",
+        "model_name": "all-MiniLM-L6-v2",
+        "dim": 384,
+        "is_fallback": false
+      },
+      "semantic": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.21232,
+            0.226816
+          ],
+          [
+            0.293731,
+            0.0,
+            0.205197
+          ],
+          [
+            0.297498,
+            0.247902,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 0.439135,
+          "agent_1": 0.498928,
+          "agent_2": 0.545399
+        },
+        "col_sums": {
+          "agent_0": 0.591228,
+          "agent_1": 0.460221,
+          "agent_2": 0.432013
+        },
+        "hub": "agent_2",
+        "hub_row_sum": 0.545399,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            -0.081411,
+            -0.070682
+          ],
+          [
+            0.081411,
+            0.0,
+            -0.042705
+          ],
+          [
+            0.070682,
+            0.042705,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": -0.152093,
+          "agent_1": 0.038706,
+          "agent_2": 0.113387
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.047755,
+        "mean_offdiagonal": 0.247244,
+        "max_offdiagonal": 0.297498
+      },
+      "token": {
+        "agents": [
+          "agent_0",
+          "agent_1",
+          "agent_2"
+        ],
+        "matrix": [
+          [
+            0.0,
+            0.536445,
+            0.530462
+          ],
+          [
+            0.528866,
+            0.0,
+            0.53137
+          ],
+          [
+            0.548676,
+            0.55654,
+            0.0
+          ]
+        ],
+        "row_sums": {
+          "agent_0": 1.066907,
+          "agent_1": 1.060236,
+          "agent_2": 1.105216
+        },
+        "col_sums": {
+          "agent_0": 1.077542,
+          "agent_1": 1.092985,
+          "agent_2": 1.061833
+        },
+        "hub": "agent_2",
+        "hub_row_sum": 1.105216,
+        "asymmetry_matrix": [
+          [
+            0.0,
+            0.007579,
+            -0.018214
+          ],
+          [
+            -0.007579,
+            0.0,
+            -0.02517
+          ],
+          [
+            0.018214,
+            0.02517,
+            0.0
+          ]
+        ],
+        "asymmetry_row_sums": {
+          "agent_0": -0.010635,
+          "agent_1": -0.032749,
+          "agent_2": 0.043384
+        },
+        "hub_net_positive": true,
+        "gini_outgoing": 0.009277,
+        "mean_offdiagonal": 0.538727,
+        "max_offdiagonal": 0.55654
+      },
+      "per_round_influence": {
+        "0": 0.26690517862637836,
+        "5": 0.21478389700253805,
+        "10": 0.28185223539670307,
+        "15": 0.1961226463317871,
+        "20": 0.25675790508588153,
+        "25": 0.20936121543248495,
+        "30": 0.2401217818260193,
+        "35": 0.20386028289794922,
+        "40": 0.3061051269372304,
+        "45": 0.2965669631958008
+      },
+      "mean_influence_sem": 0.247244,
+      "gini_sem": 0.047755,
+      "hub": "agent_2",
+      "hub_net_positive": true
+    },
+    "lagged_influence_divergence": {
+      "by_lag": [
+        {
+          "lag": 0,
+          "rho": 0.1515,
+          "p_value": 0.6760651759978539,
+          "n": 10
+        },
+        {
+          "lag": 1,
+          "rho": 0.3333,
+          "p_value": 0.3465935070873343,
+          "n": 10
+        },
+        {
+          "lag": 2,
+          "rho": 0.2121,
+          "p_value": 0.5563057751029299,
+          "n": 10
+        },
+        {
+          "lag": 3,
+          "rho": -0.2606,
+          "p_value": 0.46708905438634024,
+          "n": 10
+        }
+      ],
+      "best_lag": 1,
+      "best_rho": 0.3333,
+      "best_p_value": 0.3465935070873343,
+      "precedes": false
+    }
+  }
+}

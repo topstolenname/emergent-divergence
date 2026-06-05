@@ -1,0 +1,285 @@
+{
+  "n_cells_total": 3,
+  "backends": [
+    "stub"
+  ],
+  "per_backend": {
+    "stub": {
+      "n_cells": 3,
+      "headline_cis": {
+        "A": {
+          "linguistic_mean_jsd": {
+            "n": 1,
+            "mean": 0.294709,
+            "ci_low": 0.294709,
+            "ci_high": 0.294709
+          },
+          "behavioral_divergence": {
+            "n": 1,
+            "mean": 0.087889,
+            "ci_low": 0.087889,
+            "ci_high": 0.087889
+          },
+          "semantic_mean": {
+            "n": 1,
+            "mean": 0.099572,
+            "ci_low": 0.099572,
+            "ci_high": 0.099572
+          },
+          "semantic_rho": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "influence_mean_sem": {
+            "n": 1,
+            "mean": 0.077288,
+            "ci_low": 0.077288,
+            "ci_high": 0.077288
+          },
+          "influence_gini": {
+            "n": 1,
+            "mean": 0.429954,
+            "ci_low": 0.429954,
+            "ci_high": 0.429954
+          }
+        },
+        "B": {
+          "linguistic_mean_jsd": {
+            "n": 1,
+            "mean": 0.263355,
+            "ci_low": 0.263355,
+            "ci_high": 0.263355
+          },
+          "behavioral_divergence": {
+            "n": 1,
+            "mean": 0.056451,
+            "ci_low": 0.056451,
+            "ci_high": 0.056451
+          },
+          "semantic_mean": {
+            "n": 1,
+            "mean": 0.081154,
+            "ci_low": 0.081154,
+            "ci_high": 0.081154
+          },
+          "semantic_rho": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "influence_mean_sem": {
+            "n": 1,
+            "mean": 0.091031,
+            "ci_low": 0.091031,
+            "ci_high": 0.091031
+          },
+          "influence_gini": {
+            "n": 1,
+            "mean": 0.462541,
+            "ci_low": 0.462541,
+            "ci_high": 0.462541
+          }
+        },
+        "C": {
+          "linguistic_mean_jsd": {
+            "n": 1,
+            "mean": 0.268541,
+            "ci_low": 0.268541,
+            "ci_high": 0.268541
+          },
+          "behavioral_divergence": {
+            "n": 1,
+            "mean": 0.050709,
+            "ci_low": 0.050709,
+            "ci_high": 0.050709
+          },
+          "semantic_mean": {
+            "n": 1,
+            "mean": 0.076589,
+            "ci_low": 0.076589,
+            "ci_high": 0.076589
+          },
+          "semantic_rho": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "influence_mean_sem": {
+            "n": 1,
+            "mean": 0.094352,
+            "ci_low": 0.094352,
+            "ci_high": 0.094352
+          },
+          "influence_gini": {
+            "n": 1,
+            "mean": 0.460784,
+            "ci_low": 0.460784,
+            "ci_high": 0.460784
+          }
+        }
+      },
+      "by_condition_n": {
+        "A": 1,
+        "B": 1,
+        "C": 1
+      },
+      "hypotheses": {
+        "H1": {
+          "statement": "Linguistic divergence increases over rounds (Spearman \u03c1 on pairwise JSD).",
+          "metric": "per-cell Spearman \u03c1 (condition A)",
+          "ci": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "verdict": "Insufficient data"
+        },
+        "H2": {
+          "statement": "Agents specialize behaviorally by role.",
+          "metric": "behavioral divergence score (condition A)",
+          "ci": {
+            "n": 1,
+            "mean": 0.087889,
+            "ci_low": 0.087889,
+            "ci_high": 0.087889
+          },
+          "verdict": "Mixed"
+        },
+        "H3": {
+          "statement": "Semantic divergence increases over rounds (Spearman \u03c1 on MiniLM cosine).",
+          "metric": "per-cell semantic Spearman \u03c1 (condition A)",
+          "ci": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "verdict": "Insufficient data"
+        },
+        "H4": {
+          "statement": "Memory amplifies divergence (condition A > condition B).",
+          "metric": "mean semantic cosine distance, A minus B",
+          "contrast": {
+            "diff": 0.018418,
+            "ci_low": 0.018418,
+            "ci_high": 0.018418,
+            "cohens_d": null,
+            "n_a": 1,
+            "n_b": 1
+          },
+          "verdict": "Mixed"
+        },
+        "H5": {
+          "statement": "Divergence occurs even without role priors (condition C).",
+          "metric": "per-cell semantic Spearman \u03c1 (condition C)",
+          "ci": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "verdict": "Insufficient data"
+        },
+        "H-I1": {
+          "statement": "Memory amplifies cross-agent influence (A > B).",
+          "metric": "mean semantic influence-delta, A minus B",
+          "contrast": {
+            "diff": -0.013743,
+            "ci_low": -0.013743,
+            "ci_high": -0.013743,
+            "cohens_d": null,
+            "n_a": 1,
+            "n_b": 1
+          },
+          "verdict": "Not supported"
+        },
+        "H-I2": {
+          "statement": "Influence concentrates into a hub (Gini of outgoing influence).",
+          "metric": "Gini of row sums (condition A); hub net-positive proportion (threshold Gini>0.2)",
+          "gini_ci": {
+            "n": 1,
+            "mean": 0.429954,
+            "ci_low": 0.429954,
+            "ci_high": 0.429954
+          },
+          "hub_net_positive": {
+            "n": 1,
+            "n_true": 1,
+            "proportion": 1.0
+          },
+          "verdict": "Supported"
+        },
+        "H-I3": {
+          "statement": "Influence precedes divergence (lagged correlation, lag \u2265 1).",
+          "metric": "proportion of cells with positive significant lagged \u03c1 (condition A)",
+          "precedes": {
+            "n": 0,
+            "proportion": null
+          },
+          "best_lag_rho_ci": {
+            "n": 0,
+            "mean": null,
+            "ci_low": null,
+            "ci_high": null
+          },
+          "verdict": "Insufficient data"
+        }
+      }
+    }
+  },
+  "cross_backend_conditionA": {
+    "linguistic_mean_jsd": {
+      "stub": {
+        "n": 1,
+        "mean": 0.294709,
+        "ci_low": 0.294709,
+        "ci_high": 0.294709
+      }
+    },
+    "behavioral_divergence": {
+      "stub": {
+        "n": 1,
+        "mean": 0.087889,
+        "ci_low": 0.087889,
+        "ci_high": 0.087889
+      }
+    },
+    "semantic_mean": {
+      "stub": {
+        "n": 1,
+        "mean": 0.099572,
+        "ci_low": 0.099572,
+        "ci_high": 0.099572
+      }
+    },
+    "semantic_rho": {
+      "stub": {
+        "n": 0,
+        "mean": null,
+        "ci_low": null,
+        "ci_high": null
+      }
+    },
+    "influence_mean_sem": {
+      "stub": {
+        "n": 1,
+        "mean": 0.077288,
+        "ci_low": 0.077288,
+        "ci_high": 0.077288
+      }
+    },
+    "influence_gini": {
+      "stub": {
+        "n": 1,
+        "mean": 0.429954,
+        "ci_low": 0.429954,
+        "ci_high": 0.429954
+      }
+    }
+  }
+}

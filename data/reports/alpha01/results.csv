@@ -1,0 +1,2 @@
+cell_id,backend,condition,seed,status,rounds,rounds_done,cost_usd,provider,model,linguistic_mean_jsd,h1_jsd_rho,behavioral_divergence,semantic_mean,semantic_rho,semantic_trend,influence_available,influence_mean_sem,influence_gini,influence_hub,influence_hub_net_positive,influence_precedes,influence_lag_rho,embedder_backend,error
+claude_A_seed42,claude,A,42,failed,37,0,0.0,claude,claude-sonnet-4-6,,,,,,,False,,,,,,,minilm,

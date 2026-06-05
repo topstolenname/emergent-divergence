@@ -1,0 +1,2 @@
+cell_id,backend,condition,seed,status,rounds,rounds_done,cost_usd,provider,model,linguistic_mean_jsd,h1_jsd_rho,behavioral_divergence,semantic_mean,semantic_rho,semantic_trend,influence_available,influence_mean_sem,influence_gini,influence_hub,influence_hub_net_positive,influence_precedes,influence_lag_rho,embedder_backend,error
+ollama_A_seed42,ollama,A,42,done,50,50,0.0,ollama,phi3.5:3.8b,0.255816,-0.1433,0.037767,0.302446,0.2596,0.035178,True,0.247244,0.047755,agent_2,True,False,0.3333,minilm,

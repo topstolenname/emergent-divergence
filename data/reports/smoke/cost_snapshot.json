@@ -1,0 +1,21 @@
+{
+  "cap_usd": 50.0,
+  "spent_usd": 0.0,
+  "input_tokens": 68405,
+  "output_tokens": 17963,
+  "calls": 144,
+  "prices": {
+    "claude": {
+      "input_per_mtok": 3.0,
+      "output_per_mtok": 15.0
+    },
+    "ollama": {
+      "input_per_mtok": 0.0,
+      "output_per_mtok": 0.0
+    },
+    "stub": {
+      "input_per_mtok": 0.0,
+      "output_per_mtok": 0.0
+    }
+  }
+}

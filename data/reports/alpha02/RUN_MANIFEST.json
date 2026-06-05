@@ -1,0 +1,152 @@
+{
+  "run_id": "alpha02",
+  "generated_utc": "2026-06-05T02:56:44.670360+00:00",
+  "provenance": {
+    "git": {
+      "sha": null,
+      "branch": null,
+      "dirty": null
+    },
+    "python": "3.12.12",
+    "platform": "Linux-7.0.0-22-generic-x86_64-with-glibc2.43",
+    "package_version": "0.1.0",
+    "models": {
+      "ollama": {
+        "model": "phi3.5:3.8b",
+        "host": "http://localhost:11434",
+        "digest": "61819fb370a3c1a9be6694869331e5f85f867a079e9271d66cb223acb81d04ba",
+        "modified_at": "2025-10-09T12:50:44.842846756-04:00",
+        "size": 2176178843
+      }
+    }
+  },
+  "config": {
+    "run_id": "alpha02",
+    "backends": [
+      "ollama"
+    ],
+    "conditions": [
+      "A"
+    ],
+    "seeds": [
+      42
+    ],
+    "rounds": 50,
+    "turns_per_round": 2,
+    "temperature": 1.0,
+    "max_tokens": 400,
+    "num_agents": 3,
+    "influence_every_n": 5,
+    "k_samples": {
+      "ollama": 1,
+      "claude": 3,
+      "stub": 1
+    },
+    "ablation": "neutral",
+    "null_baseline": true,
+    "cap_usd": 5.0,
+    "smoke": false,
+    "output_root": "data/raw_logs",
+    "report_root": "data/reports",
+    "backends_cfg": {
+      "ollama": {
+        "model": "phi3.5:3.8b",
+        "host": "http://localhost:11434"
+      },
+      "claude": {
+        "model": "claude-sonnet-4-6"
+      },
+      "stub": {
+        "model": "stub-v1"
+      }
+    }
+  },
+  "preflight": {
+    "backends": {
+      "ollama": {
+        "available": true,
+        "reason": "reachable at http://localhost:11434"
+      }
+    },
+    "embedder": {
+      "backend": "minilm",
+      "model_name": "all-MiniLM-L6-v2",
+      "dim": 384,
+      "is_fallback": false
+    },
+    "dirs_ok": true
+  },
+  "test_gate": {
+    "ran": false,
+    "passed": true,
+    "skipped": true,
+    "returncode": null
+  },
+  "cost_estimate": {
+    "per_backend": {
+      "ollama": {
+        "n_cells": 1,
+        "calls_per_cell": 480,
+        "est_usd": 0.0
+      }
+    },
+    "total_est_usd": 0.0,
+    "cap_usd": 5.0
+  },
+  "reduction": {
+    "reduced": false,
+    "actions": [],
+    "final_estimate": {
+      "per_backend": {
+        "ollama": {
+          "n_cells": 1,
+          "calls_per_cell": 480,
+          "est_usd": 0.0
+        }
+      },
+      "total_est_usd": 0.0,
+      "cap_usd": 5.0
+    }
+  },
+  "cost_actual": {
+    "cap_usd": 5.0,
+    "spent_usd": 0.0,
+    "input_tokens": 854210,
+    "output_tokens": 192000,
+    "calls": 480,
+    "prices": {
+      "claude": {
+        "input_per_mtok": 3.0,
+        "output_per_mtok": 15.0
+      },
+      "ollama": {
+        "input_per_mtok": 0.0,
+        "output_per_mtok": 0.0
+      },
+      "stub": {
+        "input_per_mtok": 0.0,
+        "output_per_mtok": 0.0
+      }
+    }
+  },
+  "cells": [
+    {
+      "cell_id": "ollama_A_seed42",
+      "status": "done",
+      "rounds_done": 50,
+      "rounds_total": 50,
+      "cost_usd": 0.0,
+      "error": null
+    }
+  ],
+  "integrity": {
+    "expected": 1,
+    "attempted": 1,
+    "done": 1,
+    "skipped_due_to_cap": 0,
+    "skipped_unavailable": 0,
+    "failed": 0,
+    "analyzable": 1,
+    "ok": true
+  }
+}

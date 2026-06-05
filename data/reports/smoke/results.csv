@@ -1,0 +1,4 @@
+cell_id,backend,condition,seed,status,rounds,rounds_done,cost_usd,provider,model,linguistic_mean_jsd,h1_jsd_rho,behavioral_divergence,semantic_mean,semantic_rho,semantic_trend,influence_available,influence_mean_sem,influence_gini,influence_hub,influence_hub_net_positive,influence_precedes,influence_lag_rho,embedder_backend,error
+stub_A_seed42,stub,A,42,done,2,2,0.0,stub,stub-v1,0.294709,,0.087889,0.099572,,0.0021,True,0.077288,0.429954,agent_0,True,,,hashing-fallback,
+stub_B_seed42,stub,B,42,done,2,2,0.0,stub,stub-v1,0.263355,,0.056451,0.081154,,0.05571,True,0.091031,0.462541,agent_0,True,,,hashing-fallback,
+stub_C_seed42,stub,C,42,done,2,2,0.0,stub,stub-v1,0.268541,,0.050709,0.076589,,0.044579,True,0.094352,0.460784,agent_0,True,,,hashing-fallback,
