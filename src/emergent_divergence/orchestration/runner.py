@@ -225,6 +225,26 @@ class CellRunner:
                 )
                 self._record_cost(result["input_tokens"], result["output_tokens"])
 
+                if agent.memory is not None and agent.memory_enabled:
+                    recalled = result.get("recalled_memories", [])
+                    logger.log(
+                        "memory_read",
+                        round_id=round_id,
+                        task_id=task.task_id,
+                        agent_id=agent.agent_id,
+                        turn=turn,
+                        count=len(recalled),
+                        memory_size=agent.memory.count(),
+                        entries=[
+                            {
+                                "round_id": m.get("round_id"),
+                                "source": m.get("source", "self"),
+                                "preview": (m.get("content", "") or "")[:80],
+                            }
+                            for m in recalled
+                        ],
+                    )
+
                 logger.log(
                     "agent_message",
                     round_id=round_id,

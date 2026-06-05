@@ -275,13 +275,26 @@ def compute_memory_stats(log_path: Path) -> dict[str, dict[str, Any]]:
         if aid:
             writes_by_agent[aid] += 1
 
-    # Extract memory reads from agent_message events
-    messages = load_events_by_type(log_path, "agent_message")
-    for msg in messages:
-        aid = msg.get("agent_id") or msg.get("data", {}).get("agent_id")
-        reads = msg.get("data", {}).get("memory_reads", 0)
-        if aid:
-            reads_by_agent[aid].append(reads)
+    # Reads come from dedicated memory_read events (one per deliberation message).
+    # Older logs predate that event and recorded the count inline on
+    # agent_message instead, so fall back to those when no read events exist.
+    read_events = load_events_by_type(log_path, "memory_read")
+    if read_events:
+        for ev in read_events:
+            aid = ev.get("agent_id") or ev.get("data", {}).get("agent_id")
+            if not aid:
+                continue
+            data = ev.get("data", {})
+            count = data.get("count")
+            if count is None:
+                count = len(data.get("entries", []))
+            reads_by_agent[aid].append(int(count))
+    else:
+        for msg in load_events_by_type(log_path, "agent_message"):
+            aid = msg.get("agent_id") or msg.get("data", {}).get("agent_id")
+            reads = msg.get("data", {}).get("memory_reads", 0)
+            if aid:
+                reads_by_agent[aid].append(reads)
 
     stats = {}
     all_agents = set(list(writes_by_agent.keys()) + list(reads_by_agent.keys()))
@@ -290,7 +303,7 @@ def compute_memory_stats(log_path: Path) -> dict[str, dict[str, Any]]:
         stats[aid] = {
             "total_writes": writes_by_agent.get(aid, 0),
             "total_reads": sum(r),
-            "mean_reads_per_msg": round(np.mean(r), 2) if r else 0,
+            "mean_reads_per_msg": round(float(np.mean(r)), 2) if r else 0,
             "max_reads": max(r) if r else 0,
         }
 

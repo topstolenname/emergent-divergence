@@ -125,9 +125,16 @@ class Agent:
             if system_override is not None
             else self.build_system_prompt(round_id)
         )
-        memory_reads = 0
-        if self.memory is not None and self.memory_enabled:
-            memory_reads = len(self.memory.get_recent(limit=self.memory_read_limit))
+        # The recalled entries are exactly what build_system_prompt injected, so
+        # only count a read when no override replaced that prompt.
+        recalled_memories: list[dict[str, Any]] = []
+        if (
+            system_override is None
+            and self.memory is not None
+            and self.memory_enabled
+        ):
+            recalled_memories = self.memory.get_recent(limit=self.memory_read_limit)
+        memory_reads = len(recalled_memories)
 
         t0 = time.time()
         gen: Generation = self.provider.generate(
@@ -157,6 +164,7 @@ class Agent:
             "seed": seed,
             "generation": gen,
             "memory_reads": memory_reads,
+            "recalled_memories": recalled_memories,
         }
 
     def write_memory(self, round_id: int, content: str, source: str = "self") -> None:
