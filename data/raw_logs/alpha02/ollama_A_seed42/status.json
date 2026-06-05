@@ -1,0 +1,11 @@
+{
+  "cell_id": "ollama_A_seed42",
+  "backend": "ollama",
+  "condition": "A",
+  "seed": 42,
+  "status": "done",
+  "rounds_done": 50,
+  "rounds_total": 50,
+  "cost_usd": 0.0,
+  "updated": 1780628202.825139
+}

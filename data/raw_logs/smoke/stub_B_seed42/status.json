@@ -1,0 +1,11 @@
+{
+  "cell_id": "stub_B_seed42",
+  "backend": "stub",
+  "condition": "B",
+  "seed": 42,
+  "status": "done",
+  "rounds_done": 2,
+  "rounds_total": 2,
+  "cost_usd": 0.0,
+  "updated": 1780624116.2311747
+}
