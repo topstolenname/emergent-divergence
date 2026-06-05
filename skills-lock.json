@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-analytics": {
+      "source": "agent-analytics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-analytics/SKILL.md",
+      "computedHash": "c0b11d8e7f8b142cda2bb8a0366bba12175e7faf02d724c73cd71c270685d07d"
+    },
+    "agent-analytics-autoresearch": {
+      "source": "agent-analytics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/agent-analytics-autoresearch/SKILL.md",
+      "computedHash": "a7ed9eef61e32865aab1a76ecbec954a979b2627537fe5feb09924c7e00619c7"
+    }
+  }
+}
