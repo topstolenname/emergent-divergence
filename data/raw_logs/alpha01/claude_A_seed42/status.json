@@ -1,0 +1,12 @@
+{
+  "cell_id": "claude_A_seed42",
+  "backend": "claude",
+  "condition": "A",
+  "seed": 42,
+  "status": "failed",
+  "rounds_done": 0,
+  "rounds_total": 37,
+  "cost_usd": 0.0,
+  "updated": 1780624714.2974234,
+  "error": "Claude request failed after 4 attempts: Error code: 401 - {'type': 'error', 'error': {'type': 'authentication_error', 'message': 'invalid x-api-key'}, 'request_id': 'req_011CbjHUVhB3mWs7RZD1dNYQ'}"
+}
